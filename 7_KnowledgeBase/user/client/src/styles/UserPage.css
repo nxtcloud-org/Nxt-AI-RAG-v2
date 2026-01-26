@@ -1,0 +1,66 @@
+.user-page {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  background-color: var(--background-color);
+  overflow: hidden;
+}
+
+.chat-layout {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+.chat-header {
+  padding: 1rem 2rem;
+  background-color: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 72px;
+  flex-shrink: 0;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.chat-header h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.625rem;
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+
+.chat-header .subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.chat-container-wrapper {
+  flex: 1;
+  overflow: hidden;
+  padding: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .chat-header .subtitle {
+    display: none;
+  }
+}

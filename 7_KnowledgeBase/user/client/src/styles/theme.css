@@ -1,0 +1,56 @@
+:root {
+  /* Light Mode Colors - Modern & Professional */
+  --primary-color-light: #2563eb;
+  --secondary-color-light: #64748b;
+  --background-light: #f8fafc;
+  --text-primary-light: #0f172a;
+  --text-secondary-light: #475569;
+  --border-color-light: #e2e8f0;
+  --card-bg-light: #ffffff;
+  
+  /* Dark Mode Colors - Deep & Elegant */
+  --primary-color-dark: #3b82f6;
+  --secondary-color-dark: #94a3b8;
+  --background-dark: #0f172a;
+  --text-primary-dark: #f8fafc;
+  --text-secondary-dark: #94a3b8;
+  --border-color-dark: #1e293b;
+  --card-bg-dark: #1e293b;
+  
+  /* Default to Light Mode */
+  --primary-color: var(--primary-color-light);
+  --secondary-color: var(--secondary-color-light);
+  --background-color: var(--background-light);
+  --text-primary: var(--text-primary-light);
+  --text-secondary: var(--text-secondary-light);
+  --border-color: var(--border-color-light);
+  --card-bg: var(--card-bg-light);
+}
+
+.dark-mode {
+  --primary-color: var(--primary-color-dark);
+  --secondary-color: var(--secondary-color-dark);
+  --background-color: var(--background-dark);
+  --text-primary: var(--text-primary-dark);
+  --text-secondary: var(--text-secondary-dark);
+  --border-color: var(--border-color-dark);
+  --card-bg: var(--card-bg-dark);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-primary);
+  line-height: 1.5;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.sidebar, .stat-card, .document-upload, .document-list, .modal-card {
+  background-color: var(--card-bg) !important;
+}
