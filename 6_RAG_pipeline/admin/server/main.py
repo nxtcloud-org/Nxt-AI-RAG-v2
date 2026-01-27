@@ -1,5 +1,4 @@
 import os
-import json
 import uuid
 import boto3
 import psycopg2
