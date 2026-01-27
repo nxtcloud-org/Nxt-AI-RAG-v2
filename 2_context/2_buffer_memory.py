@@ -1,4 +1,3 @@
-import json
 import boto3
 import streamlit as st
 from langchain_aws import ChatBedrock

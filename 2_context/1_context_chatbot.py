@@ -1,26 +1,10 @@
 import json  # JSON 데이터 처리를 위한 라이브러리
 import boto3  # AWS SDK for Python
+from botocore.exceptions import BotoCoreError, ClientError
 import streamlit as st  # 웹 애플리케이션 구축을 위한 Streamlit 라이브러리
 
 # AWS Bedrock 클라이언트 초기화
 bedrock_runtime = boto3.client(service_name="bedrock-runtime", region_name="us-east-1")
-
-# Streamlit 웹 애플리케이션의 제목 설정
-st.title("Chatbot Ver.2 : 대화 맥락 이해 챗봇")
-
-# 세션 상태 관리
-if "messages" not in st.session_state:
-    st.session_state.messages = []  # 대화 히스토리를 저장할 리스트 초기화
-
-if "token_usage" not in st.session_state:
-    st.session_state.token_usage = {
-        "input_tokens": 0,  # 누적 입력 토큰 수
-        "output_tokens": 0,  # 누적 출력 토큰 수
-        "total_tokens": 0,  # 누적 통합 토큰 수
-        "last_input_tokens": 0,  # 최근 입력 토큰 수
-        "last_output_tokens": 0,  # 최근 출력 토큰 수
-        "last_total_tokens": 0,  # 최근 통합 토큰 수
-    }
 
 
 def get_response_from_bedrock(messages):
@@ -70,10 +54,33 @@ def get_response_from_bedrock(messages):
         st.session_state.token_usage["total_tokens"] += total_tokens
 
         return output_text
+    except (BotoCoreError, ClientError) as e:
+        st.error(f"AWS 연결 오류: {str(e)}")
+        return "AWS 서비스 연결 중 오류가 발생했습니다."
+    except json.JSONDecodeError as e:
+        st.error(f"응답 파싱 오류: {str(e)}")
+        return "응답 데이터 처리 중 오류가 발생했습니다."
     except Exception as e:
-        # 오류 발생 시 사용자에게 알림
-        st.error(f"Bedrock과 통신 중 에러 발생: {str(e)}")
-        return "응답 생성 중 에러 발생"
+        st.error(f"예상치 못한 오류: {str(e)}")
+        return "응답 생성 중 오류가 발생했습니다."
+
+
+# Streamlit 웹 애플리케이션의 제목 설정
+st.title("Chatbot Ver.2 : 대화 맥락 이해 챗봇")
+
+# 세션 상태 관리
+if "messages" not in st.session_state:
+    st.session_state.messages = []  # 대화 히스토리를 저장할 리스트 초기화
+
+if "token_usage" not in st.session_state:
+    st.session_state.token_usage = {
+        "input_tokens": 0,  # 누적 입력 토큰 수
+        "output_tokens": 0,  # 누적 출력 토큰 수
+        "total_tokens": 0,  # 누적 통합 토큰 수
+        "last_input_tokens": 0,  # 최근 입력 토큰 수
+        "last_output_tokens": 0,  # 최근 출력 토큰 수
+        "last_total_tokens": 0,  # 최근 통합 토큰 수
+    }
 
 
 # 화면 상단에 st.metric으로 토큰 사용량 표시

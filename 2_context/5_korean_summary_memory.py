@@ -1,4 +1,3 @@
-import json
 import boto3
 import streamlit as st
 from langchain_aws import ChatBedrock
@@ -43,7 +42,7 @@ conversation = ConversationChain(
 )
 
 # Streamlit UI 설정
-st.title("Chatbot Ver.2.3 : 대화 요약 메모리 챗봇")
+st.title("Chatbot Ver.2.4 : 한글 대화 요약 메모리 챗봇")
 st.caption("이전 대화 내용을 **한글로 요약**하여 저장하는 방식으로 토큰을 절약합니다.")
 
 # 대화 히스토리 표시
