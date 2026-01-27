@@ -1,4 +1,3 @@
-import json
 import streamlit as st
 import pandas as pd
 from langchain_community.document_loaders import PyPDFLoader
