@@ -1,3 +1,2 @@
 eval-type-backport
 pandas
-sentence-transformers

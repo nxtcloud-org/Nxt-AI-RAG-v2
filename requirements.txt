@@ -4,9 +4,7 @@ langchain
 langchain-community
 langchain-core
 langchain-aws
-langchain-anthropic
 langchain-text-splitters
-anthropic
 pypdf
 pymupdf
 tiktoken
@@ -16,7 +14,6 @@ psycopg2-binary
 datasets
 matplotlib
 ragas>=0.1.0
-openevals>=0.1.0
 plotly
 numpy
 requests
