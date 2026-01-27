@@ -18,7 +18,6 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 from dotenv import load_dotenv
 from typing import List, Dict
-import chromadb
 
 # LangChain imports
 from langchain_aws import BedrockEmbeddings, ChatBedrock
