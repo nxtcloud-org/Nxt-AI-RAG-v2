@@ -15,26 +15,23 @@ bedrock = ChatBedrock(
     model_kwargs={"anthropic_version": "bedrock-2023-05-31"},
 )
 
-# 한글 요약을 강제하는 프롬프트
-summary_prompt = PromptTemplate(
-    input_variables=["summary", "new_lines"],
-    template="AI와 사용자의 대화를 반드시 한글로 간략하게 요약해서 메모리를 유지해라 \n 기존 내용 : {summary} \n 새로운 내용 : {new_lines}",
-)
-
-# ConversationSummaryMemory에 한글 요약 프롬프트 적용
-memory = ConversationSummaryMemory(
-    llm=bedrock,
-    memory_key="history",
-    return_messages=True,
-    max_token_limit=1000,
-    prompt=summary_prompt,  # 한글 요약 강제 적용
-)
-
 # Streamlit 세션 상태 초기화
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "memory" not in st.session_state:
-    st.session_state.memory = memory
+    # 한글 요약을 강제하는 프롬프트
+    summary_prompt = PromptTemplate(
+        input_variables=["summary", "new_lines"],
+        template="AI와 사용자의 대화를 반드시 한글로 간략하게 요약해서 메모리를 유지해라 \n 기존 내용 : {summary} \n 새로운 내용 : {new_lines}",
+    )
+    # ConversationSummaryMemory에 한글 요약 프롬프트 적용
+    st.session_state.memory = ConversationSummaryMemory(
+        llm=bedrock,
+        memory_key="history",
+        return_messages=True,
+        max_token_limit=1000,
+        prompt=summary_prompt,
+    )
 
 # ConversationChain 초기화
 conversation = ConversationChain(

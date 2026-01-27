@@ -14,19 +14,17 @@ bedrock = ChatBedrock(
     model_kwargs={"anthropic_version": "bedrock-2023-05-31"},
 )
 
-# SummaryMemory 초기화
-memory = ConversationSummaryMemory(
-    llm=bedrock,  # 요약을 생성할 LLM
-    memory_key="history",  # ConversationChain과 일치시키기 위한 키
-    return_messages=True,
-    max_token_limit=1000,  # 요약된 메모리의 최대 토큰 수 제한
-)
-
 # 세션 상태 초기화
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "memory" not in st.session_state:
-    st.session_state.memory = memory
+    # SummaryMemory 초기화 (필요할 때만 생성)
+    st.session_state.memory = ConversationSummaryMemory(
+        llm=bedrock,  # 요약을 생성할 LLM
+        memory_key="history",
+        return_messages=True,
+        max_token_limit=1000,
+    )
 
 # ConversationChain 초기화
 conversation = ConversationChain(

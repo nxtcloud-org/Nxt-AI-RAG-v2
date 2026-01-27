@@ -14,18 +14,16 @@ bedrock = ChatBedrock(
     model_kwargs={"anthropic_version": "bedrock-2023-05-31"},
 )
 
-# WindowMemory 초기화 (최근 3개의 대화만 유지)
-memory = ConversationBufferWindowMemory(
-    k=3,  # 최근 3개의 대화만 유지
-    return_messages=True,
-    memory_key="history",  # chat_history에서 history로 변경
-)
-
 # 세션 상태 초기화
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "memory" not in st.session_state:
-    st.session_state.memory = memory
+    # WindowMemory 초기화 (최근 3개의 대화만 유지)
+    st.session_state.memory = ConversationBufferWindowMemory(
+        k=3,  # 최근 3개의 대화만 유지
+        return_messages=True,
+        memory_key="history",
+    )
 
 # ConversationChain 초기화
 conversation = ConversationChain(
