@@ -8,6 +8,7 @@ langchain-anthropic
 langchain-text-splitters
 anthropic
 pypdf
+pymupdf
 tiktoken
 chromadb
 python-dotenv
