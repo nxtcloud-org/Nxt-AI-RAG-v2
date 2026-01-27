@@ -13,7 +13,6 @@ bedrock_client = boto3.client(service_name='bedrock-runtime',region_name='us-eas
 embeddings = BedrockEmbeddings(client=bedrock_client, model_id="amazon.titan-embed-text-v1")
 
 def lambda_handler(event, context):
-    # 환경 변수
     DB_HOST = os.environ['DB_HOST']
     DB_NAME = os.environ['DB_NAME']
     DB_USER = os.environ['DB_USER']
@@ -22,11 +21,13 @@ def lambda_handler(event, context):
     bucket_name = event['Records'][0]['s3']['bucket']['name']
     file_key = event['Records'][0]['s3']['object']['key']
     
-    print(f"처리 시작 - 버킷이름: {bucket_name}")
-    print(f"처리 파일: {file_key}")
+    filename = file_key.split('_', 1)[1] if '_' in file_key else file_key
+    
+    print(f"처리 시작 - 버킷: {bucket_name}")
+    print(f"파일: {file_key}")
+    print(f"파일명: {filename}")
     
     try:
-
         with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
             s3_client.download_fileobj(bucket_name, file_key, tmp_file)
             pdf_path = tmp_file.name
@@ -39,7 +40,6 @@ def lambda_handler(event, context):
         )
         chunks = pdf_loader.load_and_split(text_splitter=splitter)
         
-        # PostgreSQL 연결
         conn = psycopg2.connect(
             host=DB_HOST,
             database=DB_NAME,
@@ -48,27 +48,36 @@ def lambda_handler(event, context):
         )
         cursor = conn.cursor()
         
-        print(f"데이터베이스 연결 완료")
-        print(f"데이터베이스 호스트: {DB_HOST}")
-        print(f"데이터베이스 이름: {DB_NAME}")
-        print(f"데이터베이스 사용자: {DB_USER}")
-        print(f"총 처리할 청크 개수: {len(chunks)}")
+        print(f"DB 연결 완료")
+        print(f"총 청크 개수: {len(chunks)}")
+        
+        cursor.execute("""
+            INSERT INTO document_files (filename, s3_key, chunk_count)
+            VALUES (%s, %s, %s)
+            ON CONFLICT(s3_key) DO UPDATE SET chunk_count = EXCLUDED.chunk_count
+            RETURNING id
+        """, (filename, file_key, len(chunks)))
+        
+        document_file_id = cursor.fetchone()[0]
+        print(f"문서 파일 ID 생성: {document_file_id}")
         
         successful_chunks = 0
         
         for chunk in chunks:
             cleaned_content = chunk.page_content.encode().decode().replace("\x00", "").strip()
-
+            
             if not cleaned_content:
                 continue
-
+            
             embedding_vector = embeddings.embed_query(cleaned_content)
             
             metadata = {
-                'page': chunk.metadata.get('page', 0)+1
+                'page': chunk.metadata.get('page', 0) + 1,
+                'filename': filename,
+                's3_key': file_key,
+                'document_file_id': document_file_id
             }
             
-            # 데이터베이스에 저장
             cursor.execute("""
                 INSERT INTO documents (content, embedding, metadata)
                 VALUES (%s, %s, %s)
@@ -78,14 +87,14 @@ def lambda_handler(event, context):
                 json.dumps(metadata)
             ))
             successful_chunks += 1
-            
+        
         conn.commit()
         
-        print(f"문서 처리 완료")
-        print(f"성공적으로 처리된 청크 개수: {successful_chunks}")
+        print(f"처리 완료")
+        print(f"성공한 청크: {successful_chunks}")
         
     except Exception as e:
-        print(f"PDF 파일 처리 중 오류 발생: {str(e)}")
+        print(f"오류: {str(e)}")
         if 'conn' in locals():
             conn.rollback()
         
