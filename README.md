@@ -1,4 +1,4 @@
-# Nxt-AI-RAG-v2
+# Nxt-AI-RAG
 
 Nxtcloud Technical Training Team의 RAG(Retrieval-Augmented Generation) 실습 교육용 레포지토리입니다.
 
