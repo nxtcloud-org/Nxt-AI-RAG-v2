@@ -1,21 +1,10 @@
 import json  # JSON 데이터 처리를 위한 라이브러리
 import boto3  # AWS SDK for Python
+from botocore.exceptions import BotoCoreError, ClientError
 import streamlit as st  # 웹 애플리케이션 구축을 위한 Streamlit 라이브러리
 
 # AWS Bedrock 클라이언트 초기화
 bedrock_runtime = boto3.client(service_name="bedrock-runtime", region_name="us-east-1")
-
-# 스트림릿 앱 제목 설정
-st.title("Chatbot Ver.1 : 단순 챗봇")
-
-# 세션 상태 관리 - 대화 히스토리 초기화
-if "messages" not in st.session_state:
-    st.session_state.messages = []  # 사용자와 어시스턴트 간 대화 기록을 저장
-
-# 대화 히스토리 표시
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):  # 메시지 역할에 따라 채팅 버블 생성
-        st.markdown(message["content"])  # 메시지 내용을 화면에 렌더링
 
 
 def get_response_from_bedrock(prompt):
@@ -53,10 +42,28 @@ def get_response_from_bedrock(prompt):
         output_text = FILL_ME_IN
 
         return output_text
+    except (BotoCoreError, ClientError) as e:
+        st.error(f"AWS 연결 오류: {str(e)}")
+        return "AWS 서비스 연결 중 오류가 발생했습니다."
+    except json.JSONDecodeError as e:
+        st.error(f"응답 파싱 오류: {str(e)}")
+        return "응답 데이터 처리 중 오류가 발생했습니다."
     except Exception as e:
-        # 에러 발생 시 사용자에게 메시지 표시
-        st.error(f"Bedrock과 통신 중 오류가 발생했습니다: {str(e)}")
+        st.error(f"예상치 못한 오류: {str(e)}")
         return "응답 생성 중 오류가 발생했습니다."
+
+
+# 스트림릿 앱 제목 설정
+st.title("Chatbot Ver.1 : 단순 챗봇")
+
+# 세션 상태 관리 - 대화 히스토리 초기화
+if "messages" not in st.session_state:
+    st.session_state.messages = []  # 사용자와 어시스턴트 간 대화 기록을 저장
+
+# 대화 히스토리 표시
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):  # 메시지 역할에 따라 채팅 버블 생성
+        st.markdown(message["content"])  # 메시지 내용을 화면에 렌더링
 
 
 # 사용자 입력 처리
