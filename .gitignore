@@ -232,3 +232,7 @@ thumb
 sketch
 
 kbs.json
+
+# Claude Code
+.claude/
+.mcp.json
