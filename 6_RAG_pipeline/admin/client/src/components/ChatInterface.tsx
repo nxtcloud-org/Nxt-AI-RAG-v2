@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Message, Source } from '../types';
+import { Message } from '../types';
 import '../styles/ChatInterface.css';
 
 interface ChatInterfaceProps {
@@ -98,7 +98,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyPress}
             placeholder="질문을 입력하세요..."
             disabled={isLoading}
             className="message-input"
