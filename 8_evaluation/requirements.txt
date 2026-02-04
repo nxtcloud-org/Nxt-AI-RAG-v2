@@ -1,2 +1,6 @@
 eval-type-backport
 pandas
+datasets
+matplotlib
+ragas>=0.1.0
+plotly
