@@ -4,8 +4,6 @@ langchain
 langchain-community
 langchain-core
 langchain-aws
-langchain-text-splitters
-pypdf
 pymupdf
 tiktoken
 chromadb
