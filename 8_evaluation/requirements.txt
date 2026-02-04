@@ -4,3 +4,5 @@ datasets
 matplotlib
 ragas>=0.1.0
 plotly
+python-dotenv
+psycopg2-binary
