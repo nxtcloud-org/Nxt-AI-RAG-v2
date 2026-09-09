@@ -19,7 +19,7 @@ def init_bedrock():
     bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
     bedrock = ChatBedrock(
         client=bedrock_client,
-        model_id="anthropic.claude-3-haiku-20240307-v1:0",
+        model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0",
         model_kwargs={"anthropic_version": "bedrock-2023-05-31"},
     )
     embeddings = BedrockEmbeddings(region_name="us-east-1")
@@ -92,13 +92,13 @@ try:
 
             # 프롬프트 구성
             prompt = f"""다음은 학사 정보에 대한 질문과 관련 문서 내용입니다:
-    
+
     질문: {search_query}
-    
+
     관련 문서 내용:
     {context}
-    
-    위 내용을 바탕으로 질문에 대해 명확하고 친절하게 답변해주세요. 
+
+    위 내용을 바탕으로 질문에 대해 명확하고 친절하게 답변해주세요.
     문서에 없는 내용은 언급하지 말고, 확실한 정보만 답변에 포함해주세요.
     """
 

@@ -13,7 +13,7 @@ bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
 # LangChain BedrockChat 초기화
 bedrock = ChatBedrock(
     client=bedrock_client,
-    model_id="anthropic.claude-3-haiku-20240307-v1:0",
+    model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0",
     model_kwargs={"anthropic_version": "bedrock-2023-05-31"},
 )
 

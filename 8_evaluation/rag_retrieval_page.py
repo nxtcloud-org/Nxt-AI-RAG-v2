@@ -30,7 +30,7 @@ try:
     import rag_retrieval_evaluator
     import importlib
     importlib.reload(rag_retrieval_evaluator)
-    
+
     from rag_retrieval_evaluator import (
         ChromaDBRetriever, PostgreSQLRetriever, AWSKnowledgeBaseRetriever,
         RetrievalEvaluator, TEST_DATASET
@@ -104,11 +104,11 @@ st.markdown("""
 def initialize_retrievers():
     """사용 가능한 모든 Retriever 초기화"""
     available = {}
-    
+
     # ChromaDB
     pdf_path = os.getenv("CHROMA_PDF_PATH", os.path.abspath(os.path.join(current_dir, "../5_RAG/data/univ-data.pdf")))
     db_path = os.getenv("CHROMA_DB_PATH", os.path.abspath(os.path.join(current_dir, "../5_RAG/vector_db")))
-    
+
     if os.path.exists(pdf_path):
         try:
             available["ChromaDB"] = ChromaDBRetriever(pdf_path=pdf_path, vector_db_path=db_path)
@@ -129,7 +129,7 @@ def initialize_retrievers():
             available["KnowledgeBase"] = AWSKnowledgeBaseRetriever(knowledge_base_ids=kb_ids)
         except:
             pass
-        
+
     return available
 
 @st.cache_resource
@@ -139,7 +139,7 @@ def initialize_llm():
         client = boto3.client("bedrock-runtime", region_name="us-east-1")
         return ChatBedrock(
             client=client,
-            model_id="anthropic.claude-3-haiku-20240307-v1:0",
+            model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0",
             model_kwargs={"temperature": 0}
         )
     except:
@@ -149,7 +149,7 @@ def generate_answer(llm, question: str, contexts: list) -> str:
     """검색된 컨텍스트로 답변 생성"""
     if not contexts:
         return "관련 정보를 찾을 수 없습니다."
-    
+
     prompt = f"""참고 자료:
 {chr(10).join(contexts)}
 
@@ -228,9 +228,9 @@ if col2.button("📈 배치 평가", use_container_width=True):
 def display_single_results(query, k, retriever_names):
     """검색 결과 표시 (병렬 처리)"""
     from concurrent.futures import ThreadPoolExecutor, as_completed
-    
+
     st.markdown("### 🎯 검색 결과 비교")
-    
+
     # 병렬로 검색 실행
     def retrieve_with_timing(name):
         start = time.time()
@@ -241,12 +241,12 @@ def display_single_results(query, k, retriever_names):
         except Exception as e:
             duration = time.time() - start
             return name, None, duration, str(e)
-    
+
     # 병렬 실행
     search_results = {}
     with ThreadPoolExecutor(max_workers=len(retriever_names)) as executor:
         futures = {executor.submit(retrieve_with_timing, name): name for name in retriever_names}
-        
+
         for future in as_completed(futures):
             name, results, duration, error = future.result()
             search_results[name] = {
@@ -254,24 +254,24 @@ def display_single_results(query, k, retriever_names):
                 'duration': duration,
                 'error': error
             }
-    
+
     # 결과 표시 (원래 순서대로)
     cols = st.columns(len(retriever_names))
-    
+
     for idx, name in enumerate(retriever_names):
         with cols[idx]:
             st.markdown(f"<div class='system-header'><div class='system-title'>{name}</div></div>", unsafe_allow_html=True)
-            
+
             data = search_results[name]
             st.caption(f"⏱️ DB 조회: {data['duration']:.3f}초")
-            
+
             if data['error']:
                 st.error(f"오류: {data['error']}")
             elif not data['results']:
                 st.info("컨텍스트를 찾지 못했습니다.")
             else:
                 results = data['results']
-                
+
                 # AI 답변 생성 (시간 측정 제외)
                 if llm:
                     with st.spinner("답변 생성 중..."):
@@ -279,7 +279,7 @@ def display_single_results(query, k, retriever_names):
                         st.markdown("**🤖 AI 생성 답변**")
                         st.info(answer)
                     st.markdown("---")
-                
+
                 for rank, result in enumerate(results, 1):
                     st.markdown(f"""
                     <div class='retriever-card'>
@@ -302,7 +302,7 @@ def run_batch_evaluation(retrievers, metrics, k_value):
     )
 
     completed = st.container()
-    
+
     with st.status("평가 중...", expanded=True) as status:
         # 1단계: 문서 검색
         st.write("📋 **1단계: 문서 검색**")
@@ -311,14 +311,14 @@ def run_batch_evaluation(retrievers, metrics, k_value):
             st.write(f"   → {name} 검색 중...")
             results = [all_retrievers[name].retrieve(q, k=k_value) for q in TEST_DATASET["questions"]]
             all_results[all_retrievers[name].get_system_name()] = results
-        
+
         with completed:
             st.success("✅ **1단계 완료**: 문서 검색 완료")
-        
+
         # 1.5단계: 답변 생성
         has_gen = any(isinstance(m, (Faithfulness, AnswerRelevancy)) for m in metrics)
         all_answers = None
-        
+
         if has_gen:
             if llm is None:
                 st.warning("⚠️ LLM 초기화 실패. 검색 메트릭만 평가합니다.")
@@ -327,10 +327,10 @@ def run_batch_evaluation(retrievers, metrics, k_value):
                 st.write("🤖 **1.5단계: 답변 생성**")
                 progress_bar = st.progress(0)
                 progress_text = st.empty()
-                
+
                 total = len(retrievers) * len(TEST_DATASET["questions"])
                 current = 0
-                
+
                 all_answers = {}
                 for system_name, contexts_list in all_results.items():
                     system_answers = []
@@ -341,44 +341,44 @@ def run_batch_evaluation(retrievers, metrics, k_value):
                         progress_bar.progress(progress)
                         progress_text.text(f"답변 생성 중... {current}/{total} ({progress*100:.1f}%)")
                     all_answers[system_name] = system_answers
-                
+
                 progress_bar.empty()
                 progress_text.empty()
-                
+
                 with completed:
                     st.success("✅ **1.5단계 완료**: 답변 생성 완료")
-        
+
         # 2단계: 메트릭 평가
         st.write("📊 **2단계: 메트릭 평가**")
         eval_progress = st.progress(0)
         eval_text = st.empty()
-        
+
         all_dfs = {}
         total_sys = len(all_results)
-        
+
         for idx, (system_name, contexts) in enumerate(all_results.items()):
             eval_text.text(f"평가 중... {system_name} ({idx+1}/{total_sys})")
             system_answers = all_answers.get(system_name) if all_answers else None
             df = evaluator.evaluate_system(system_name, contexts, system_answers)
-            
+
             if df is not None:
                 all_dfs[system_name] = df
-            
+
             eval_progress.progress((idx + 1) / total_sys)
-        
+
         eval_progress.empty()
         eval_text.empty()
-        
+
         with completed:
             st.success("✅ **2단계 완료**: 메트릭 평가 완료")
-        
+
         comparison_df = evaluator.create_comparison_report(all_dfs)
         status.update(label="✅ 평가 완료!", state="complete", expanded=False)
-    
+
     # 시각화
     display_visualizations(comparison_df, all_dfs)
     display_detailed_logs(all_dfs)
-    
+
     st.balloons()
 
 def display_visualizations(comparison_df, all_dfs):
@@ -386,15 +386,15 @@ def display_visualizations(comparison_df, all_dfs):
     if comparison_df is None or comparison_df.empty:
         st.error("⚠️ 비교 결과를 생성할 수 없습니다.")
         return
-    
+
     if not all(col in comparison_df.columns for col in ['Metric', 'Mean', 'System']):
         st.warning("⚠️ 비교 리포트 형식이 예상과 다릅니다.")
         st.dataframe(comparison_df)
         return
-    
+
     st.markdown("---")
     st.markdown("## 📊 시각화")
-    
+
     # 전체 통계 요약
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -407,9 +407,9 @@ def display_visualizations(comparison_df, all_dfs):
     with col4:
         best_system = comparison_df.groupby('System')['Mean'].mean().idxmax()
         st.metric("최고 성능", best_system)
-    
+
     st.markdown("---")
-    
+
     # 메트릭별 성능 비교
     st.markdown("### 📊 메트릭별 성능 비교")
     fig_bar = px.bar(
@@ -418,13 +418,13 @@ def display_visualizations(comparison_df, all_dfs):
         template="plotly_dark", height=400
     )
     st.plotly_chart(fig_bar, use_container_width=True)
-    
+
     st.markdown("---")
-    
+
     # 성능 히트맵
     st.markdown("### 📊 성능 히트맵")
     pivot = comparison_df.pivot(index="System", columns="Metric", values="Mean")
-    
+
     fig_heat = go.Figure(data=go.Heatmap(
         z=pivot.values,
         x=pivot.columns.tolist(),
@@ -435,16 +435,16 @@ def display_visualizations(comparison_df, all_dfs):
         textfont={"size": 12},
         colorbar=dict(title="Score")
     ))
-    
+
     fig_heat.update_layout(xaxis_title="Metric", yaxis_title="System", height=300)
     st.plotly_chart(fig_heat, use_container_width=True)
-    
+
     st.markdown("---")
-    
+
     # 시스템별 종합 점수
     st.markdown("### 🏆 시스템별 종합 점수")
     system_avg = comparison_df.groupby('System')['Mean'].mean().sort_values(ascending=False)
-    
+
     cols = st.columns(len(system_avg))
     for idx, ((system, score), col) in enumerate(zip(system_avg.items(), cols), 1):
         medal = "🥇" if idx == 1 else "🥈" if idx == 2 else "🥉" if idx == 3 else "📊"
@@ -455,36 +455,36 @@ def display_detailed_logs(all_dfs):
     """상세 평가 로그 표시"""
     if not all_dfs:
         return
-    
+
     st.markdown("---")
     st.markdown("### 📄 상세 평가 로그")
-    
+
     tabs = st.tabs(list(all_dfs.keys()))
-    
+
     for idx, system_name in enumerate(all_dfs.keys()):
         with tabs[idx]:
             df = all_dfs[system_name]
             numeric_cols = df.select_dtypes(include=['number']).columns
-            
+
             # 시스템별 요약
             st.markdown(f"#### {system_name} 평가 요약")
             col_sum1, col_sum2 = st.columns(2)
-            
+
             with col_sum1:
                 st.markdown("**평균 ± 표준편차**")
                 for col in numeric_cols:
                     avg, std = df[col].mean(), df[col].std()
                     st.write(f"• **{col}**: {avg:.3f} (±{std:.3f})")
-            
+
             with col_sum2:
                 st.markdown("**최소 ~ 최대**")
                 for col in numeric_cols:
                     min_val, max_val = df[col].min(), df[col].max()
                     st.write(f"• **{col}**: {min_val:.3f} ~ {max_val:.3f}")
-            
+
             st.markdown("---")
             st.markdown("**전체 평가 데이터**")
-            
+
             # 카드 형식으로 표시
             for row_idx in range(len(df)):
                 display_evaluation_card(df.iloc[row_idx], row_idx, numeric_cols)
@@ -494,7 +494,7 @@ def display_evaluation_card(row, row_idx, numeric_cols):
     # 점수 계산
     scores = [row[col] for col in numeric_cols if pd.notna(row[col])]
     avg_score = sum(scores) / len(scores) if scores else 0
-    
+
     # 점수에 따른 색상
     if avg_score >= 0.9:
         score_color = "🟢"
@@ -502,30 +502,30 @@ def display_evaluation_card(row, row_idx, numeric_cols):
         score_color = "🟡"
     else:
         score_color = "🔴"
-    
+
     # 질문 미리보기
     question_preview = ""
     if 'user_input' in row:
         question_text = str(row['user_input'])
         question_preview = question_text[:80] + "..." if len(question_text) > 80 else question_text
-    
+
     # Expander 제목
     expander_title = f"{score_color} 질문 {row_idx + 1}"
     if question_preview:
         expander_title += f" {question_preview}"
     expander_title += f" - 평균 점수: {avg_score:.3f}"
-    
+
     with st.expander(expander_title):
         # 질문
         if 'user_input' in row:
             st.markdown("**📝 질문**")
             st.info(row['user_input'])
-        
+
         # 답변
         if 'response' in row:
             st.markdown("**🤖 AI 답변**")
             st.success(row['response'])
-        
+
         # 검색된 컨텍스트
         if 'retrieved_contexts' in row:
             st.markdown("**📚 검색된 컨텍스트**")
@@ -535,14 +535,14 @@ def display_evaluation_card(row, row_idx, numeric_cols):
                     st.markdown(f"**{ctx_idx}.** {ctx}")
             else:
                 st.markdown(contexts)
-        
+
         # 정답 참조
         if 'reference' in row:
             st.markdown("**✅ 정답 참조**")
             st.warning(row['reference'])
-        
+
         st.markdown("---")
-        
+
         # 메트릭 점수
         st.markdown("**📊 메트릭 점수**")
         metric_cols = st.columns(len(numeric_cols))
@@ -558,15 +558,15 @@ def display_evaluation_card(row, row_idx, numeric_cols):
 if st.session_state.mode == 'single':
     st.markdown("---")
     st.subheader("🧪 단일 테스트")
-    
+
     col_input, col_k = st.columns([4, 1])
     query = col_input.text_input("검색 쿼리:", placeholder="예: 조기졸업 요건이 뭐야?")
     k = col_k.number_input("Top K", min_value=1, max_value=10, value=3)
-    
+
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         search_clicked = st.button("🔍 검색 실행", type="primary", use_container_width=True)
-    
+
     if search_clicked:
         if query:
             display_single_results(query, k, selected_retrievers)
@@ -576,9 +576,9 @@ if st.session_state.mode == 'single':
 else:  # batch mode
     st.markdown("---")
     st.subheader("📈 배치 평가")
-    
+
     col_left, col_right = st.columns([3, 1])
-    
+
     with col_left:
         st.info(f"""
         **평가 설정:**
@@ -586,13 +586,13 @@ else:  # batch mode
         - 질문 수: {len(TEST_DATASET['questions'])}개
         - 메트릭: {len(selected_metrics)}개
         """)
-    
+
     with col_right:
         batch_k = st.number_input("Top K", min_value=1, max_value=10, value=3, key="batch_k")
-    
+
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         eval_clicked = st.button("🚀 평가 시작", type="primary", use_container_width=True)
-    
+
     if eval_clicked:
         run_batch_evaluation(selected_retrievers, selected_metrics, batch_k)

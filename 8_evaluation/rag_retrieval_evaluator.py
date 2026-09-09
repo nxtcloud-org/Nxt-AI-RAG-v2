@@ -89,7 +89,7 @@ class ChromaDBRetriever:
     def __init__(self, pdf_path: str = None, vector_db_path: str = None):
         self.bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
         self.embeddings = BedrockEmbeddings(
-            client=self.bedrock_client, 
+            client=self.bedrock_client,
             model_id="amazon.titan-embed-text-v1"
         )
 
@@ -154,7 +154,7 @@ class PostgreSQLRetriever:
 
         self.bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
         self.embeddings = BedrockEmbeddings(
-            client=self.bedrock_client, 
+            client=self.bedrock_client,
             model_id="amazon.titan-embed-text-v1"
         )
 
@@ -204,7 +204,7 @@ class AWSKnowledgeBaseRetriever:
     def __init__(self, knowledge_base_ids: List[str]):
         self.kb_ids = knowledge_base_ids
         self.bedrock_agent_runtime = boto3.client(
-            'bedrock-agent-runtime', 
+            'bedrock-agent-runtime',
             region_name="us-east-1"
         )
 
@@ -256,11 +256,11 @@ class RetrievalEvaluator:
         self.bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
         self.llm = ChatBedrock(
             client=self.bedrock_client,
-            model_id="anthropic.claude-3-haiku-20240307-v1:0",
+            model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0",
             model_kwargs={"temperature": 0.1},
         )
         self.embeddings = BedrockEmbeddings(
-            client=self.bedrock_client, 
+            client=self.bedrock_client,
             model_id="amazon.titan-embed-text-v1"
         )
 
@@ -286,14 +286,14 @@ class RetrievalEvaluator:
         return all_results
 
     def create_evaluation_dataset(
-        self, 
-        system_name: str, 
-        retrieved_contexts: List[List[str]], 
+        self,
+        system_name: str,
+        retrieved_contexts: List[List[str]],
         answers: List[str] = None
     ) -> Dataset:
         """RAGAS 평가용 데이터셋 생성"""
         ground_truths = [
-            "\n".join(contexts) if contexts else "" 
+            "\n".join(contexts) if contexts else ""
             for contexts in self.gold_contexts
         ]
 
@@ -309,9 +309,9 @@ class RetrievalEvaluator:
         return Dataset.from_dict(data)
 
     def evaluate_system(
-        self, 
-        system_name: str, 
-        retrieved_contexts: List[List[str]], 
+        self,
+        system_name: str,
+        retrieved_contexts: List[List[str]],
         answers: List[str] = None
     ):
         """특정 시스템 평가"""
@@ -344,8 +344,8 @@ class RetrievalEvaluator:
             return None
 
     def compare_systems(
-        self, 
-        all_results: Dict[str, List[List[str]]], 
+        self,
+        all_results: Dict[str, List[List[str]]],
         all_answers: Dict[str, List[str]] = None
     ):
         """모든 시스템 비교 평가"""
@@ -428,9 +428,9 @@ class RetrievalEvaluator:
         plt.show()
 
     def save_results(
-        self, 
-        all_dfs: Dict[str, pd.DataFrame], 
-        comparison_df: pd.DataFrame, 
+        self,
+        all_dfs: Dict[str, pd.DataFrame],
+        comparison_df: pd.DataFrame,
         output_dir: str = "."
     ):
         """결과 저장"""
