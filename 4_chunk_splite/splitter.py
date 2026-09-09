@@ -23,7 +23,8 @@ try:
     )
 
     # PDF 로딩 및 분할
-    pdf_loader = PyPDFLoader("./data/univ-data.pdf")
+    # 5-2_RAG와 같은 문서로 미리 쪼개보기 — 여기서 본 청크가 곧 검색의 단위가 된다
+    pdf_loader = PyPDFLoader("./data/univ-admin-manual.pdf")
     pdf = pdf_loader.load()
     data = pdf_loader.load_and_split(text_splitter=splitter)
 

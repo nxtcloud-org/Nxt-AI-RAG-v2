@@ -37,27 +37,24 @@ def load_and_process_pdf():
     pdf_loader = PyMuPDFLoader("./data/univ-admin-manual.pdf")
     # 청크 분할
     # ──────────────────────────────────────────────────────────────
-    # 🔬 실습 포인트: 청크 크기가 검색 품질을 좌우한다
+    # 🔬 실습 포인트: 챗봇이 이상하다? 범인은 여기 있다
     #
-    # 아래 chunk_size를 1000으로 바꾸면 검색 실패를 재현할 수 있습니다.
-    # (실측 사례 — 같은 문서, 같은 질문, Claude Haiku 4.5 기준)
+    # 지금 이 앱은 일부 질문에 "문서에 없습니다"라고 답합니다.
+    # 문서에는 분명히 답이 있는데도요. (실측 사례 — Claude Haiku 4.5 기준)
     #
-    #   chunk_size=1000 (18개 청크) — 여러 주제가 한 청크에 섞임:
+    #   현재 설정 chunk_size=1000 — 여러 주제가 한 청크에 뒤섞임:
     #     Q. 출퇴근 기록 소급 등록은 언제까지 가능한가요?
-    #     A. "문서에 해당 내용이 없습니다"  ← ❌ 편람에 분명히 있는데 검색 실패
+    #     A. "문서에 해당 내용이 없습니다"  ← ❌ 편람에 분명히 있음
     #     Q. 연가는 며칠까지 쓸 수 있나요?
     #     A. "문서에 연가 내용이 없습니다"  ← ❌
     #
-    #   chunk_size=500 (37개 청크, 현재 설정) — 주제별로 잘 나뉨:
+    # 4_chunk_splite에서 같은 문서를 쪼개봤던 것을 떠올려 보세요.
+    # 청크가 곧 검색의 단위입니다 — 한 청크에 여러 주제가 섞이면
+    # 임베딩이 흐릿해져 질문과 매칭되지 않습니다.
+    #
+    # 🔧 해결: 아래 값을 500 / 50 으로 바꾸고 vector_db 폴더를 지운 뒤 재실행
     #     Q. 출퇴근 기록 소급 등록은 언제까지 가능한가요?
     #     A. "익일 정오까지 사유 기재 후 소급 등록…"  ← ✅
-    #
-    # 실패 재현용 설정 (바꿔서 실행해 보고, 다시 500으로 되돌리세요):
-    # splitter = CharacterTextSplitter.from_tiktoken_encoder(
-    #     separator="\n",
-    #     chunk_size=1000,
-    #     chunk_overlap=100,
-    # )
     #
     # 청크 크기와 별개로, 질문의 구체성도 검색을 좌우합니다:
     #     Q. 연가는 며칠까지 쓸 수 있나요?     → "문서에 없습니다"  ← ❌ 뭉툭한 질문
@@ -66,8 +63,8 @@ def load_and_process_pdf():
     # ──────────────────────────────────────────────────────────────
     splitter = CharacterTextSplitter.from_tiktoken_encoder(
         separator="\n",
-        chunk_size=500,
-        chunk_overlap=50,
+        chunk_size=1000,  # 🔧 500으로 바꿔보세요
+        chunk_overlap=100,  # 🔧 50으로 바꿔보세요
     )
     data = pdf_loader.load_and_split(text_splitter=splitter)
     # 벡터 스토어 구성
