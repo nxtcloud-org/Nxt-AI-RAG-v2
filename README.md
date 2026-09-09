@@ -21,7 +21,7 @@ Nxtcloud Technical Training Team의 RAG(Retrieval-Augmented Generation) 실습 �
 
 ## 기술 스택
 
-- **LLM**: AWS Bedrock (Claude 3 Haiku)
+- **LLM**: AWS Bedrock (Claude Haiku 4.5)
 - **Embeddings**: Amazon Titan Embeddings
 - **Vector DB**: ChromaDB (로컬), PostgreSQL + pgvector (프로덕션)
 - **Framework**: LangChain, FastAPI, Streamlit
