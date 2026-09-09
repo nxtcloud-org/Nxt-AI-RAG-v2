@@ -14,7 +14,8 @@ Nxtcloud Technical Training Team의 RAG(Retrieval-Augmented Generation) 실습 �
 | `2_context` | 대화 컨텍스트 | LangChain Memory를 활용한 대화 맥락 유지 (Buffer, Window, Summary) |
 | `3_embeddings` | 벡터 임베딩 | Amazon Titan Embeddings를 활용한 텍스트 임베딩 이해 |
 | `4_chunk_splite` | 문서 분할 | PDF 문서 로딩 및 청크 분할 전략 |
-| `5_RAG` | 기본 RAG | ChromaDB를 활용한 로컬 RAG 시스템 구현 |
+| `5_RAG` | 기본 RAG (학사 데이터) | ChromaDB를 활용한 로컬 RAG 시스템 구현 |
+| `5-2_RAG` | 기본 RAG (대학행정 데이터) | `5_RAG`와 동일한 구성, 데이터만 대학행정 업무 편람으로 교체 |
 | `6_RAG_pipeline` | 프로덕션 RAG | PostgreSQL + pgvector 기반 Admin/User 분리 아키텍처 |
 | `7_KnowledgeBase` | AWS Knowledge Bases | AWS 관리형 RAG 서비스 활용 |
 | `8_evaluation` | RAG 평가 | RAGAS를 활용한 RAG 성능 평가 및 비교 분석 |
@@ -57,7 +58,8 @@ Nxt-AI-RAG-v2/
 ├── 2_context/              # 대화 컨텍스트 관리
 ├── 3_embeddings/           # 벡터 임베딩
 ├── 4_chunk_splite/         # 문서 분할
-├── 5_RAG/                  # 기본 RAG (ChromaDB)
+├── 5_RAG/                  # 기본 RAG (ChromaDB) — 학사 데이터
+├── 5-2_RAG/                # 기본 RAG (ChromaDB) — 대학행정 데이터
 ├── 6_RAG_pipeline/         # 프로덕션 RAG
 │   ├── admin/              # 관리자 (문서 업로드/관리)
 │   │   ├── client/         # React 프론트엔드
@@ -67,6 +69,9 @@ Nxt-AI-RAG-v2/
 │   │   └── server/
 │   └── lambda/             # 문서 처리 Lambda
 ├── 7_KnowledgeBase/        # AWS Knowledge Bases
+│   ├── data/
+│   │   ├── academic/       # 학사 데이터 세트
+│   │   └── admin/          # 대학행정 데이터 세트
 │   └── user/
 │       ├── client/
 │       └── server/
