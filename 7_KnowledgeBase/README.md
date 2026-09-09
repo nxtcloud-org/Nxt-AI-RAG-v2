@@ -118,7 +118,18 @@ Knowledge Base 메타데이터를 저장하는 JSON 파일입니다.
 
 ## 데이터
 
-`data/` 폴더에는 샘플 문서들이 포함되어 있습니다:
-- `campus-facilities.md`, `campus-facilities.pdf`
-- `club-guid.md`, `club-guid.pdf`
-- `univ-data.pdf`
+`data/` 폴더에는 샘플 문서 세트가 두 벌 들어 있습니다. 교육 대상에 맞는 세트를 골라 S3에 업로드합니다.
+
+### `data/academic/` — 학사 데이터 (학생 대상)
+
+- `univ-data.pdf` — 학사 행정 정보 (휴학·복학·졸업 등)
+- `club-guid.md`, `club-guid.pdf` — 동아리 회칙 및 가이드
+- `campus-facilities.md`, `campus-facilities.pdf` — 캠퍼스 시설 및 학생 서비스
+
+### `data/admin/` — 대학행정 데이터 (교직원 대상)
+
+- `univ-admin-manual.md`, `univ-admin-manual.pdf` — 대학행정 업무 편람 (규정)
+- `portal-manual.md`, `portal-manual.pdf` — 업무포털 사용 매뉴얼 (절차)
+- `annual-calendar.md`, `annual-calendar.pdf` — 연간 행정 업무 일정 (시점)
+
+두 세트 모두 **같은 주제를 서로 다른 층위로 다루는 문서 3종**으로 구성되어 있어, 질문에 따라 어느 문서에서 답을 가져오는지(출처 추적)를 확인할 수 있습니다.
