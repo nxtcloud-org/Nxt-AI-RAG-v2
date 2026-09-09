@@ -9,7 +9,7 @@ import chromadb
 
 # 사이드바 자동 숨김 설정
 st.set_page_config(initial_sidebar_state="collapsed")
-st.title("🔍 학사 정보 검색 시스템")
+st.title("🔍 대학행정 정보 검색 시스템")
 st.caption("RAG(Retrieval-Augmented Generation) 기반 문서 검색")
 
 
@@ -56,11 +56,11 @@ def load_and_process_pdf():
 try:
     vectorstore = load_and_process_pdf()
     st.success("문서가 성공적으로 로드되었습니다.")
-    st.header("📚 학사 정보 검색")
+    st.header("📚 대학행정 정보 검색")
 
     search_query = st.text_input(
         "궁금한 내용을 자연어로 입력하세요:",
-        placeholder="예: 졸업요건이 뭐야?",
+        placeholder="예: 경조사 휴가는 며칠인가요?",
         key="search_query",
     )
 
@@ -91,7 +91,7 @@ try:
             context = "\n".join([doc.page_content for doc in unique_results])
 
             # 프롬프트 구성
-            prompt = f"""다음은 학사 정보에 대한 질문과 관련 문서 내용입니다:
+            prompt = f"""다음은 대학행정 업무에 대한 질문과 관련 문서 내용입니다:
 
     질문: {search_query}
 
