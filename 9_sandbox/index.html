@@ -399,6 +399,8 @@
         <tr><th>이 샌드박스에서는</th><th>실무·운영 환경에서는</th></tr>
         <tr><td>📁 <code>data/</code> 폴더에 문서 몇 개</td>
             <td><b>S3, 구글 드라이브, 사내 문서시스템</b>과 연동해 자동 수집</td></tr>
+        <tr><td>📄 ZIP 열어 글자만 줍는 변환 (<code>extract.py</code>)</td>
+            <td><b>AWS Textract, Unstructured</b>, LangChain Document Loader</td></tr>
         <tr><td>✂️ 글자 수로 자르는 청크 (<code>rag.py</code>)</td>
             <td><b>LangChain 스플리터</b>, Bedrock KB의 의미 단위 자동 청킹</td></tr>
         <tr><td>🗄️ <code>vector_db.json</code> 파일 하나</td>
@@ -428,8 +430,8 @@
         <h2><span class="stepnum">1</span> 문서 넣기 <span style="color:var(--muted);font-weight:500;font-size:12.5px">→ data/</span></h2>
         <div class="dropzone" id="dropzone">
           <b>파일을 끌어다 놓으세요</b>
-          또는 클릭해서 선택 (.md / .txt)
-          <input type="file" id="fileInput" accept=".md,.txt" multiple class="hidden">
+          .md · .txt · .csv · 한글(hwpx) · 파워포인트(pptx) · 워드(docx)
+          <input type="file" id="fileInput" accept=".md,.txt,.csv,.hwpx,.pptx,.docx" multiple class="hidden">
         </div>
         <button class="ghost" style="width:100%;margin-top:10px" onclick="loadSample()">
           🧪 샘플 문서로 바로 해보기 (대학 행정 편람)
@@ -593,7 +595,7 @@ async function upload(files) {
   for (const f of files) form.append("files", f);
   try {
     const r = await api("/api/upload", { method: "POST", body: form });
-    show("uploadMsg", `저장 완료: ${r.saved.join(", ")} — 👉 이제 [⚡ DB 만들기]를 눌러 주세요!`, "ok");
+    show("uploadMsg", `저장 완료: ${r.saved.join(", ")} — 👉 이제 [⚡ DB 만들기]를 눌러 주세요! (한글·PPT·워드·CSV는 텍스트로 변환돼요 — 🔍 데이터 탭에서 확인)`, "ok");
     refresh();
   } catch (e) { show("uploadMsg", e.message, "error"); }
 }
@@ -620,7 +622,8 @@ async function rebuild() {
         chunk_overlap: Number(document.getElementById("overlapSlider").value),
       }),
     });
-    show("dbMsg", `완료! 문서 ${r.files}개 → 청크 ${r.chunks}개를 저장했습니다. 🔍 데이터 탭에서 쪼개진 모습을 구경해 보세요.`, "ok");
+    const big = r.chunks > 200 ? " ⚠️ 청크가 많아 무료 임베딩 한도에 걸릴 수 있어요 — 문서를 줄이거나 청크 크기를 키워 보세요." : "";
+    show("dbMsg", `완료! 문서 ${r.files}개 → 청크 ${r.chunks}개를 저장했습니다. 🔍 데이터 탭에서 쪼개진 모습을 구경해 보세요.${big}`, "ok");
     refresh();
   } catch (e) { show("dbMsg", e.message, "error"); }
   btn.disabled = false;

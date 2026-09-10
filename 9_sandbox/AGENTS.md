@@ -15,6 +15,7 @@
 | `rag.py` | 청크 분할·벡터 검색·벡터디비 관리 | ⚠️ 동작을 설명한 뒤 신중히 |
 | `llm.py` | Gemini/Bedrock AI 호출 | ⚠️ 모델 이름 교체 외 수정 자제 |
 | `guardrail.py` | 금지어 차단·개인정보 마스킹 (설정은 config.py) | ✅ 동작 이해하며 |
+| `extract.py` | hwpx·pptx·docx·csv → 텍스트 변환 (업로드 시 .md로 저장) | ⚠️ 조심히 |
 | `data/` | 검색 대상 문서 (.md/.txt) | ✅ 파일 추가·삭제 |
 | `samples/` | 예시 문서 원본 (화면의 [샘플 문서] 버튼이 data/로 복사) | ⚠️ 원본은 보존 |
 | `vector_db.json` | 벡터디비 (자동 생성됨) | ❌ 직접 편집 금지 |
@@ -54,7 +55,8 @@
 - "제목/색깔/디자인 바꿔줘" → `index.html`의 `:root` 색 변수와 `config.py`의 `APP_TITLE`
 - "AI 말투 바꿔줘" → `config.py`의 `PROMPT`
 - "검색이 잘 안돼" → `CHUNK_SIZE` 조정(작게) + DB 다시 만들기 + 질문을 구체적으로
-- "내 문서 넣고 싶어" → data 폴더에 .md/.txt 넣기 (PDF는 텍스트로 변환 필요) + [DB 만들기]
+- "내 문서 넣고 싶어" → 화면에서 업로드 (.md/.txt/.csv/.hwpx/.pptx/.docx는 자동 텍스트 변환) + [DB 만들기].
+  구버전 .hwp/.ppt/.doc와 PDF는 안 됨 — 새 형식으로 다시 저장하거나 텍스트로 변환하도록 안내
 - "금지어 추가해줘 / ○○ 질문 못 하게 해줘" → `config.py`의 `BLOCKED_KEYWORDS`
 - "전화번호(이메일 등)가 답변에 나오게/안 나오게" → `config.py`의 `MASK_PATTERNS` (정규식은 풀어서 설명)
 

@@ -58,5 +58,6 @@ python3 app.py
 
 - 로컬(Gemini)과 EC2(Bedrock)는 임베딩이 달라 **vector_db.json을 서로 넘겨 쓸 수 없습니다.**
   환경을 옮기면 [DB 초기화] → [DB 만들기]를 다시 하세요.
-- PDF는 그대로 안 들어갑니다 — 텍스트(.md/.txt)로 변환해서 넣어 주세요.
+- 업로드 가능: md·txt·csv·hwpx·pptx·docx (한글·PPT·워드·CSV는 자동으로 텍스트 변환 저장).
+  구버전 hwp·ppt·doc는 새 형식으로 다시 저장 필요, PDF는 텍스트로 변환해서 넣어 주세요.
 - `.env`의 API 키는 비밀번호입니다. 공유·업로드 금지.

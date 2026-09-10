@@ -21,6 +21,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
 import config
+import extract
 import guardrail
 import llm
 import rag
@@ -118,7 +119,11 @@ class Handler(BaseHTTPRequestHandler):
             self._json({"error": str(e)}, code=400)
 
     def _save_upload(self, body):
-        """업로드된 파일(.md/.txt)을 data 폴더에 저장 (multipart 직접 해석)"""
+        """업로드 파일을 data 폴더에 저장 (multipart 직접 해석).
+
+        hwpx·pptx·docx·csv는 extract.py로 텍스트를 뽑아 .md로 변환해 저장합니다.
+        → data 폴더는 항상 텍스트만 있고, 변환 결과를 데이터 탭에서 눈으로 확인할 수 있습니다.
+        """
         ctype = self.headers.get("Content-Type", "")
         if "boundary=" not in ctype:
             raise RuntimeError("파일이 올바르게 전송되지 않았습니다.")
@@ -132,14 +137,15 @@ class Handler(BaseHTTPRequestHandler):
                 re.search(rb'filename="([^"]*)"', header).group(1).decode("utf-8", "ignore"))
             if not name:
                 continue
-            if not name.endswith((".md", ".txt")):
-                raise RuntimeError(".md 또는 .txt 파일만 올릴 수 있습니다. (PDF는 md로 변환해서 넣어 주세요)")
             if content.endswith(b"\r\n"):
                 content = content[:-2]
+            text = extract.extract(name, content)   # 못 읽는 형식이면 여기서 안내와 함께 거절
+            stem = name[: name.rfind(".")] if "." in name else name
+            out = stem + ".md" if not name.lower().endswith((".md", ".txt")) else name
             os.makedirs(rag.DATA_DIR, exist_ok=True)
-            with open(os.path.join(rag.DATA_DIR, name), "wb") as f:
-                f.write(content)
-            saved.append(name)
+            with open(os.path.join(rag.DATA_DIR, out), "w", encoding="utf-8") as f:
+                f.write(text)
+            saved.append(out)
         if not saved:
             raise RuntimeError("저장된 파일이 없습니다. 파일을 선택했는지 확인해 주세요.")
         return saved
