@@ -133,7 +133,11 @@ class Handler(BaseHTTPRequestHandler):
                 rag.reset_db()
                 self._json(rag.build_db(opts.get("chunk_size"), opts.get("chunk_overlap")))
             elif self.path == "/api/reset":
-                rag.reset_db()
+                opts = json.loads(body) if body else {}
+                if opts.get("all"):
+                    rag.reset_all()   # 문서 + 벡터디비 전체 비우기
+                else:
+                    rag.reset_db()    # 벡터디비만 (문서는 유지)
                 self._json({"ok": True})
             elif self.path == "/api/guardrail":
                 opts = json.loads(body) if body else {}

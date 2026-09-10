@@ -138,9 +138,16 @@ def read_file(name):
 
 
 def reset_db():
-    """벡터디비 초기화 = 파일 하나 삭제"""
+    """벡터디비 초기화 = 파일 하나 삭제 (문서는 그대로 — 청크 설정 실험용)"""
     if os.path.exists(DB_PATH):
         os.remove(DB_PATH)
+
+
+def reset_all():
+    """전체 비우기 — 문서(data/)와 벡터디비를 모두 삭제해 처음 상태로"""
+    reset_db()
+    for f in list_files():
+        os.remove(os.path.join(DATA_DIR, f))
 
 
 def db_info():
