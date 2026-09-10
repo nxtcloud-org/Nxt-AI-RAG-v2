@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG 샌드박스 설명서 — 아주 쉽게</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  :root {
+    --grad-a: #0B7285; --grad-b: #4F46E5; --accent: #0E8C96;
+    --ink: #101F2E; --muted: #64798A; --bg: #F2F6FA; --card: #FFFFFF;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    background:
+      radial-gradient(900px 400px at 85% -10%, rgba(79,70,229,.10), transparent 60%),
+      radial-gradient(800px 400px at 0% 10%, rgba(11,114,133,.10), transparent 55%),
+      var(--bg);
+    color: var(--ink); padding-bottom: 80px; -webkit-font-smoothing: antialiased;
+    line-height: 1.7;
+  }
+  .wrap { max-width: 800px; margin: 0 auto; padding: 0 20px; }
+  .hero {
+    background: linear-gradient(120deg, var(--grad-a), var(--grad-b));
+    color: #fff; padding: 48px 0 56px; text-align: center;
+  }
+  .hero h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.6px; }
+  .hero p { margin-top: 10px; opacity: .88; font-size: 15.5px; }
+  section { margin-top: 36px; }
+  h2 { font-size: 21px; font-weight: 800; letter-spacing: -0.4px; margin-bottom: 14px; }
+  h2 .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 9px; font-size: 14px; color: #fff;
+    background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
+    margin-right: 8px; vertical-align: -4px;
+  }
+  .card {
+    background: var(--card); border: 1px solid rgba(16,31,46,.05); border-radius: 16px;
+    padding: 22px 24px; box-shadow: 0 10px 30px -20px rgba(16,31,46,.18); margin-bottom: 14px;
+  }
+  .lead { font-size: 16.5px; }
+  .lead b { color: var(--accent); }
+
+  /* 비유 카드 */
+  .story { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .story .card { text-align: center; padding: 20px 14px; margin: 0; }
+  .story .emoji { font-size: 34px; }
+  .story h3 { font-size: 15px; margin: 8px 0 4px; }
+  .story p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .story .as { font-size: 12px; font-weight: 700; color: var(--accent); margin-top: 8px; }
+  .flowarrow { text-align: center; font-size: 20px; color: var(--muted); margin: 6px 0; }
+
+  /* 파일 지도 */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #ECF1F5; }
+  th { color: var(--muted); font-size: 12.5px; }
+  td code { background: #EDF2F6; border-radius: 6px; padding: 2px 8px; font-size: 13px; }
+  .ok { color: #0B8457; font-weight: 700; }
+  .warn { color: #B7791F; font-weight: 700; }
+  .no { color: #D14343; font-weight: 700; }
+
+  /* 단계 */
+  ol.steps { counter-reset: s; list-style: none; }
+  ol.steps li {
+    counter-increment: s; position: relative; padding: 4px 0 18px 46px; font-size: 15px;
+  }
+  ol.steps li::before {
+    content: counter(s); position: absolute; left: 0; top: 2px;
+    width: 30px; height: 30px; border-radius: 10px; color: #fff; font-weight: 800; font-size: 14px;
+    background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
+    display: flex; align-items: center; justify-content: center;
+  }
+  ol.steps li:not(:last-child)::after {
+    content: ""; position: absolute; left: 14px; top: 36px; bottom: 2px; width: 2px; background: #DCE5EC;
+  }
+  ol.steps small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+  pre {
+    background: #101F2E; color: #D9E6EE; border-radius: 12px; padding: 14px 18px;
+    font-size: 13.5px; overflow-x: auto; margin: 8px 0;
+    font-family: "SF Mono", Consolas, monospace;
+  }
+  pre b { color: #6EE7B7; font-weight: 600; }
+
+  /* 부탁 예시 칩 */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    background: #fff; border: 1px solid #DCE5EC; border-radius: 999px;
+    padding: 8px 16px; font-size: 13.5px; color: var(--ink);
+  }
+  .chip::before { content: "💬 "; }
+
+  /* FAQ */
+  details { background: var(--card); border: 1px solid rgba(16,31,46,.05); border-radius: 14px;
+    padding: 16px 20px; margin-bottom: 10px; box-shadow: 0 8px 24px -20px rgba(16,31,46,.2); }
+  details summary { cursor: pointer; font-weight: 700; font-size: 14.5px; list-style: none; }
+  details summary::before { content: "Q. "; color: var(--accent); font-weight: 800; }
+  details p { margin-top: 10px; font-size: 14px; color: var(--muted); }
+  details p b { color: var(--ink); }
+
+  .tip {
+    background: linear-gradient(135deg, rgba(11,114,133,.07), rgba(79,70,229,.07));
+    border: 1px solid rgba(14,140,150,.2); border-radius: 14px; padding: 16px 20px;
+    font-size: 14px; margin-top: 14px;
+  }
+  footer { text-align: center; margin-top: 44px; font-size: 12.5px; color: var(--muted); }
+  a.btn {
+    display: inline-block; margin-top: 16px; background: rgba(255,255,255,.16);
+    border: 1px solid rgba(255,255,255,.4); color: #fff; text-decoration: none;
+    border-radius: 999px; padding: 9px 20px; font-size: 14px; font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap">
+    <h1>📖 RAG 샌드박스, 아주 쉬운 설명서</h1>
+    <p>내 문서를 읽고 대답하는 나만의 AI — 부숴도 괜찮은 모래놀이터입니다</p>
+    <a class="btn" href="/">앱 화면으로 돌아가기 →</a>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <section>
+    <h2><span class="num">1</span>이게 뭐예요?</h2>
+    <div class="card lead">
+      <b>내가 넣은 문서만 읽고 대답하는 작은 AI 검색기</b>입니다.<br>
+      그리고 이름 그대로 <b>샌드박스(모래놀이터)</b>예요 — 제목을 바꾸고, 색을 바꾸고,
+      내 문서를 넣고, 코드를 고장 내도 됩니다. 망가지면 다시 다운로드하면 그만이에요.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">2</span>RAG? 오픈북 시험이라고 생각하세요</h2>
+    <div class="card" style="margin-bottom:14px">
+      AI는 우리 부서 일을 모릅니다. 그래서 시험 볼 때(질문할 때)마다
+      <b>우리가 준 자료를 슬쩍 보여주고 답하게</b> 합니다. 이게 RAG의 전부예요.
+    </div>
+    <div class="story">
+      <div class="card">
+        <div class="emoji">📚</div>
+        <h3>책꽂이</h3>
+        <p>답의 재료가 될 문서들을 꽂아두는 곳</p>
+        <div class="as">= data 폴더</div>
+      </div>
+      <div class="card">
+        <div class="emoji">✂️</div>
+        <h3>쪽지 만들기</h3>
+        <p>책을 통째로 못 보니까 내용을 작은 쪽지로 잘라둬요</p>
+        <div class="as">= 청크 분할</div>
+      </div>
+      <div class="card">
+        <div class="emoji">🗄️</div>
+        <h3>정리 서랍</h3>
+        <p>쪽지를 <b>의미별로</b> 정리해둔 서랍. 비슷한 얘기끼리 모여요</p>
+        <div class="as">= vector_db.json</div>
+      </div>
+      <div class="card">
+        <div class="emoji">🤖</div>
+        <h3>답하는 조수</h3>
+        <p>질문과 비슷한 쪽지 3장만 꺼내 보여주면, 그걸 읽고 답해요</p>
+        <div class="as">= AI (Gemini/Bedrock)</div>
+      </div>
+    </div>
+    <div class="tip">
+      💡 <b>그래서 답이 이상하면?</b> 조수(AI) 잘못이 아니라 <b>엉뚱한 쪽지를 건넨 것</b>일 때가 많아요.
+      쪽지를 더 잘게 자르거나(청크 크기 ↓), 질문을 더 구체적으로 하면 좋아집니다.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">3</span>폴더 안에는 뭐가 있어요?</h2>
+    <div class="card">
+      <table>
+        <tr><th>파일</th><th>하는 일</th><th>만져도 되나요?</th></tr>
+        <tr><td><code>config.py</code></td><td>제목·AI 말투(프롬프트)·쪽지 크기 설정</td><td class="ok">✅ 가장 먼저!</td></tr>
+        <tr><td><code>index.html</code></td><td>화면 디자인 (색·글씨·배치 전부)</td><td class="ok">✅ 마음껏</td></tr>
+        <tr><td><code>data/</code></td><td>책꽂이 — 문서(.md/.txt)를 넣는 곳</td><td class="ok">✅ 넣고 빼고</td></tr>
+        <tr><td><code>app.py</code></td><td>서버코드 — 화면과 AI를 연결하는 다리</td><td class="warn">⚠️ 조심히</td></tr>
+        <tr><td><code>rag.py</code></td><td>쪽지 자르기 + 서랍에서 찾기</td><td class="warn">⚠️ 조심히</td></tr>
+        <tr><td><code>llm.py</code></td><td>AI 호출 (로컬=Gemini, EC2=Bedrock 자동)</td><td class="warn">⚠️ 조심히</td></tr>
+        <tr><td><code>vector_db.json</code></td><td>정리 서랍 (자동으로 만들어짐)</td><td class="no">❌ 버튼으로만</td></tr>
+        <tr><td><code>.env</code></td><td>AI 열쇠(API 키) 보관함</td><td class="no">❌ 공유 금지</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">4</span>처음 실행까지 (내 컴퓨터)</h2>
+    <div class="card">
+      <ol class="steps">
+        <li><b>파이썬이 있는지 확인</b>
+          <small>터미널에 <code>python --version</code> — 없다고 나오면 python.org에서 설치 (AI 비서에게 "파이썬 설치 도와줘"라고 해도 됩니다)</small></li>
+        <li><b>무료 AI 열쇠 받기</b>
+          <small>aistudio.google.com/apikey 접속 → 키 만들기 → 복사 (구글 계정만 있으면 무료)</small></li>
+        <li><b>열쇠 넣기</b>
+          <small><code>.env.example</code> 파일을 열어 키를 붙여넣고, 파일 이름을 <code>.env</code>로 바꿔 저장</small></li>
+        <li><b>실행!</b>
+          <small>이 폴더에서 아래 명령 → 브라우저에서 <b>localhost:8501</b> 열기</small>
+          <pre><b>python app.py</b></pre></li>
+      </ol>
+      <div class="tip">☁️ <b>EC2(수업 서버)에서는?</b> 1~3단계가 필요 없어요. 폴더에 들어가 <code>python3 app.py</code> 하면 AWS Bedrock으로 알아서 연결됩니다.</div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">5</span>화면에서는 순서대로 세 번</h2>
+    <div class="card">
+      <ol class="steps">
+        <li><b>문서 넣기</b> <small>.md 또는 .txt 파일을 끌어다 놓기 (책꽂이에 꽂기)</small></li>
+        <li><b>DB 만들기</b> <small>쪽지로 자르고 서랍에 정리 — 문서를 바꿀 때마다 다시!</small></li>
+        <li><b>질문하기</b> <small>답변 아래 "근거 청크 보기"를 누르면 AI가 어떤 쪽지를 봤는지 확인할 수 있어요</small></li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">6</span>AI 비서(Codex·클로드)에게 이렇게 부탁하세요</h2>
+    <div class="card">
+      <p style="font-size:14px;color:var(--muted);margin-bottom:12px">
+        이 폴더를 AI 코딩 비서에 연결하면, 코드를 몰라도 말로 고칠 수 있습니다.
+        비서를 위한 안내문(<code>AGENTS.md</code>)이 이미 들어 있어요.</p>
+      <div class="chips">
+        <span class="chip">이 앱 실행시켜줘</span>
+        <span class="chip">제목을 "○○팀 규정 검색기"로 바꿔줘</span>
+        <span class="chip">화면을 보라색 테마로 바꿔줘</span>
+        <span class="chip">AI가 공문 말투로 답하게 해줘</span>
+        <span class="chip">청크 크기를 줄이면 뭐가 달라져?</span>
+        <span class="chip">다크모드 만들어줘</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">7</span>뭔가 이상해요! (자주 묻는 질문)</h2>
+    <details>
+      <summary>문서에 있는 내용인데 "없다"고 답해요</summary>
+      <p>엉뚱한 쪽지를 건넨 경우예요. <b>① 질문을 구체적으로</b> ("연가 며칠?" → "재직 3년이면 연가 며칠?"),
+      <b>② config.py의 CHUNK_SIZE를 줄이고</b> (300 → 200) <b>[DB 만들기]를 다시</b> 눌러보세요.</p>
+    </details>
+    <details>
+      <summary>"⚠️ AI 미연결" 배지가 떠요</summary>
+      <p>열쇠가 없다는 뜻이에요. 위 4번 섹션의 2~3단계(.env에 키 넣기)를 하고 앱을 다시 실행하세요.</p>
+    </details>
+    <details>
+      <summary>PDF를 올렸는데 안 돼요</summary>
+      <p>이 앱은 <b>.md와 .txt만</b> 읽어요. PDF는 내용을 복사해 메모장에 붙여넣고 .txt로 저장하거나,
+      AI 비서에게 "이 PDF를 텍스트로 바꿔줘"라고 부탁하세요.</p>
+    </details>
+    <details>
+      <summary>"이 벡터디비는 호환되지 않습니다"라고 나와요</summary>
+      <p>EC2(Bedrock)에서 만든 서랍과 내 컴퓨터(Gemini)의 서랍은 정리 방식이 달라요.
+      <b>[DB 초기화] → [DB 만들기]</b>를 누르면 지금 환경에 맞게 다시 정리됩니다.</p>
+    </details>
+    <details>
+      <summary>설정을 바꿨는데 아무것도 안 변해요</summary>
+      <p>두 가지를 확인하세요. <b>① 앱을 껐다(Ctrl+C) 다시 실행</b>했나요?
+      <b>② CHUNK_SIZE를 바꿨다면 [DB 만들기]도 다시</b> 눌렀나요?</p>
+    </details>
+    <details>
+      <summary>완전히 고장 냈어요 😱</summary>
+      <p>축하해요, 제대로 실험한 거예요! 샌드박스니까 <b>폴더를 지우고 다시 다운로드</b>하면 처음 상태로 돌아옵니다.
+      뭘 하다가 고장 났는지 기억해두면 그게 가장 좋은 공부예요.</p>
+    </details>
+  </section>
+
+  <footer>
+    RAG 샌드박스 · 서울대 행정 AX 실무 리더 양성과정 실습 자료 ·
+    문서는 <code>data/</code>, 서랍은 <code>vector_db.json</code>, 다리는 <code>app.py</code>
+  </footer>
+</div>
+</body>
+</html>

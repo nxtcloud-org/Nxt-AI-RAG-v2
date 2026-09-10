@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{TITLE}}</title>
+<!-- 글꼴: 인터넷이 안 되면 자동으로 시스템 글꼴을 씁니다 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  /* ═══════════════════════════════════════════════════════════
+     🎨 디자인은 전부 여기서 — 아래 변수만 바꿔도 분위기가 변합니다
+     ═══════════════════════════════════════════════════════════ */
+  :root {
+    --grad-a: #0B7285;            /* 그라데이션 시작색 */
+    --grad-b: #4F46E5;            /* 그라데이션 끝색 */
+    --accent: #0E8C96;            /* 포인트 색 */
+    --ink: #101F2E;               /* 본문 글자색 */
+    --muted: #64798A;             /* 연한 글자색 */
+    --bg: #F2F6FA;                /* 페이지 배경 */
+    --card: #FFFFFF;              /* 카드 배경 */
+    --radius: 18px;               /* 모서리 둥글기 */
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    background:
+      radial-gradient(900px 400px at 85% -10%, rgba(79,70,229,.10), transparent 60%),
+      radial-gradient(800px 400px at 0% 10%, rgba(11,114,133,.10), transparent 55%),
+      var(--bg);
+    color: var(--ink); min-height: 100vh; padding-bottom: 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 20px; }
+
+  /* ── 히어로 ── */
+  .hero {
+    background: linear-gradient(120deg, var(--grad-a), var(--grad-b));
+    color: #fff; padding: 44px 0 88px; position: relative; overflow: hidden;
+  }
+  .hero::after {   /* 은은한 빛망울 */
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(500px 220px at 78% 20%, rgba(255,255,255,.18), transparent 60%);
+  }
+  .hero .wrap { position: relative; z-index: 1; }
+  .hero-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.6px; }
+  .subtitle { margin-top: 8px; font-size: 15px; opacity: .85; font-weight: 400; }
+  .badge {
+    backdrop-filter: blur(6px); background: rgba(255,255,255,.16);
+    border: 1px solid rgba(255,255,255,.35); color: #fff;
+    border-radius: 999px; padding: 7px 16px; font-size: 13px; font-weight: 600; white-space: nowrap;
+  }
+
+  /* ── RAG 파이프라인 (히어로에 걸쳐 뜨는 카드) ── */
+  .pipeline {
+    margin-top: -52px; position: relative; z-index: 2;
+    background: rgba(255,255,255,.92); backdrop-filter: blur(10px);
+    border: 1px solid rgba(16,31,46,.06); border-radius: var(--radius);
+    box-shadow: 0 18px 40px -18px rgba(16,31,46,.25);
+    display: flex; align-items: stretch; padding: 18px 10px;
+  }
+  .node { flex: 1; text-align: center; position: relative; padding: 4px 6px; }
+  .node + .node::before {   /* 노드 사이 연결선 */
+    content: ""; position: absolute; left: calc(-50% + 26px); right: calc(50% + 26px);
+    top: 26px; height: 2px; background: #DCE5EC; border-radius: 2px;
+  }
+  .node.on + .node.on::before { background: linear-gradient(90deg, var(--grad-a), var(--grad-b)); }
+  .dot {
+    width: 52px; height: 52px; border-radius: 50%; margin: 0 auto;
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    background: #EDF2F6; border: 2px solid #DCE5EC; position: relative; z-index: 1;
+    transition: all .3s;
+  }
+  .node.on .dot {
+    background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
+    border-color: transparent; box-shadow: 0 8px 18px -8px rgba(79,70,229,.6);
+  }
+  .node-name { margin-top: 8px; font-size: 12.5px; font-weight: 700; color: var(--muted); }
+  .node-val { font-size: 13px; font-weight: 800; color: var(--ink); margin-top: 1px; }
+  .node.on .node-name { color: var(--accent); }
+
+  /* ── 카드 공통 ── */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--card); border: 1px solid rgba(16,31,46,.05);
+    border-radius: var(--radius); padding: 22px;
+    box-shadow: 0 10px 30px -20px rgba(16,31,46,.18);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 16px 36px -20px rgba(16,31,46,.28); }
+  .card h2 { font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .stepnum {
+    width: 22px; height: 22px; border-radius: 7px; font-size: 12px; color: #fff;
+    background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+
+  /* ── 버튼 ── */
+  button {
+    border: 0; border-radius: 10px; padding: 11px 18px; font-size: 14px; font-weight: 700;
+    cursor: pointer; font-family: inherit; color: #fff;
+    background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
+    box-shadow: 0 8px 16px -8px rgba(79,70,229,.5);
+    transition: transform .15s, box-shadow .15s, opacity .15s;
+  }
+  button:hover { transform: translateY(-1px); box-shadow: 0 12px 20px -8px rgba(79,70,229,.55); }
+  button.ghost { background: #EDF2F6; color: var(--ink); box-shadow: none; }
+  button:disabled { opacity: .55; cursor: wait; transform: none; }
+
+  /* ── 업로드 존 ── */
+  .dropzone {
+    border: 2px dashed #C9D6E0; border-radius: 12px; padding: 22px 14px;
+    text-align: center; color: var(--muted); font-size: 13.5px; cursor: pointer;
+    transition: all .2s; background: #FAFCFE;
+  }
+  .dropzone:hover, .dropzone.over { border-color: var(--accent); background: #F0F9FA; color: var(--accent); }
+  .dropzone b { display: block; font-size: 15px; color: var(--ink); margin-bottom: 3px; }
+  .dropzone.over b { color: var(--accent); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .chip {
+    background: #EDF2F6; border-radius: 999px; padding: 5px 12px;
+    font-size: 12.5px; font-weight: 600; color: var(--muted);
+  }
+
+  /* ── 질문 영역 ── */
+  .askcard { margin-top: 16px; }
+  .askrow { display: flex; gap: 10px; }
+  input[type=text] {
+    flex: 1; border: 1.5px solid #D8E2EA; border-radius: 12px; padding: 13px 16px;
+    font-size: 15px; font-family: inherit; background: #FAFCFE; transition: all .2s;
+  }
+  input[type=text]:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(14,140,150,.12); background: #fff;
+  }
+  .examples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .exq {
+    background: #fff; border: 1px solid #DCE5EC; border-radius: 999px;
+    padding: 7px 14px; font-size: 13px; color: var(--muted); cursor: pointer; transition: all .15s;
+  }
+  .exq:hover { border-color: var(--accent); color: var(--accent); background: #F0F9FA; }
+
+  /* ── 대화(답변) ── */
+  .thread { margin-top: 20px; display: flex; flex-direction: column; gap: 14px; }
+  .bubble-q {
+    align-self: flex-end; max-width: 80%;
+    background: linear-gradient(135deg, var(--grad-a), var(--grad-b)); color: #fff;
+    border-radius: 16px 16px 4px 16px; padding: 12px 18px; font-size: 14.5px;
+    box-shadow: 0 8px 18px -10px rgba(79,70,229,.5);
+    animation: rise .3s ease both;
+  }
+  .bubble-a {
+    align-self: flex-start; max-width: 92%; display: flex; gap: 10px;
+    animation: rise .3s ease both;
+  }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0; font-size: 18px;
+    background: #fff; border: 1px solid rgba(16,31,46,.07);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 10px -4px rgba(16,31,46,.15);
+  }
+  .bubble-a .body {
+    background: #fff; border: 1px solid rgba(16,31,46,.05);
+    border-radius: 4px 16px 16px 16px; padding: 14px 18px; font-size: 14.5px; line-height: 1.75;
+    box-shadow: 0 10px 26px -18px rgba(16,31,46,.25);
+  }
+  .body h3, .body h4 { margin: 10px 0 4px; font-size: 15px; }
+  .body p { margin: 6px 0; }
+  .body ul { margin: 6px 0 6px 18px; }
+  .body b { color: var(--accent); }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* 로딩 점 세 개 */
+  .dots span {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--muted); margin-right: 4px; animation: blink 1.2s infinite;
+  }
+  .dots span:nth-child(2) { animation-delay: .2s; }
+  .dots span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+
+  /* 근거 청크 */
+  details.src { margin-top: 10px; }
+  details.src summary {
+    cursor: pointer; font-size: 13px; font-weight: 700; color: var(--accent);
+    list-style: none; user-select: none;
+  }
+  details.src summary::before { content: "▸ "; }
+  details.src[open] summary::before { content: "▾ "; }
+  .chunk {
+    background: #F7FAFC; border-left: 3px solid var(--accent);
+    border-radius: 0 10px 10px 0; padding: 10px 14px; margin-top: 8px;
+    font-size: 12.5px; color: var(--muted); white-space: pre-wrap; line-height: 1.6;
+  }
+  .chunk .meta { display: flex; align-items: center; gap: 8px; color: var(--ink); font-weight: 700; margin-bottom: 6px; }
+  .bar { flex: 1; max-width: 120px; height: 5px; background: #E3EAEF; border-radius: 3px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--grad-a), var(--grad-b)); }
+
+  .msg { font-size: 13.5px; margin-top: 10px; color: var(--muted); }
+  .msg.error { color: #D14343; font-weight: 600; }
+  .hidden { display: none; }
+  footer { text-align: center; margin-top: 40px; font-size: 12.5px; color: var(--muted); }
+  footer code { background: #EDF2F6; border-radius: 5px; padding: 1px 6px; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="hero-top">
+      <div>
+        <h1>{{TITLE}}</h1>
+        <p class="subtitle">{{SUBTITLE}}</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <a class="badge" href="/guide" style="text-decoration:none">📖 쉬운 설명서</a>
+        <span class="badge" id="backend">연결 중…</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- RAG 구성이 항상 한눈에 -->
+  <div class="pipeline">
+    <div class="node" id="nFiles">
+      <div class="dot">📁</div>
+      <div class="node-name">파일 저장폴더</div>
+      <div class="node-val"><span id="fileCount">0</span>개 문서</div>
+    </div>
+    <div class="node" id="nChunks">
+      <div class="dot">✂️</div>
+      <div class="node-name">청크 분할</div>
+      <div class="node-val"><span id="chunkCount">0</span>개 청크</div>
+    </div>
+    <div class="node" id="nDb">
+      <div class="dot">🗄️</div>
+      <div class="node-name">벡터디비</div>
+      <div class="node-val" id="dbState">없음</div>
+    </div>
+    <div class="node" id="nAi">
+      <div class="dot">🤖</div>
+      <div class="node-name">AI 답변</div>
+      <div class="node-val" id="aiName">–</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- 1단계 -->
+    <div class="card">
+      <h2><span class="stepnum">1</span> 문서 넣기 <span style="color:var(--muted);font-weight:500;font-size:12.5px">→ data/</span></h2>
+      <div class="dropzone" id="dropzone">
+        <b>파일을 끌어다 놓으세요</b>
+        또는 클릭해서 선택 (.md / .txt)
+        <input type="file" id="fileInput" accept=".md,.txt" multiple class="hidden">
+      </div>
+      <div class="chips" id="fileList"></div>
+      <p class="msg" id="uploadMsg"></p>
+    </div>
+
+    <!-- 2단계 -->
+    <div class="card">
+      <h2><span class="stepnum">2</span> 벡터디비 만들기 <span style="color:var(--muted);font-weight:500;font-size:12.5px">→ vector_db.json</span></h2>
+      <p style="font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:14px">
+        문서를 청크로 쪼개고, 의미 좌표(벡터)로 바꿔 저장합니다.<br>
+        설정을 바꿨다면 다시 만들어야 반영됩니다.
+      </p>
+      <div style="display:flex;gap:8px">
+        <button id="buildBtn" onclick="rebuild()">⚡ DB 만들기</button>
+        <button class="ghost" onclick="resetDb()">초기화</button>
+      </div>
+      <p class="msg" id="dbMsg"></p>
+    </div>
+  </div>
+
+  <!-- 3단계 -->
+  <div class="card askcard">
+    <h2><span class="stepnum">3</span> 질문하기</h2>
+    <div class="askrow">
+      <input type="text" id="question" placeholder="문서 내용에 대해 무엇이든 물어보세요"
+             onkeydown="if(event.key==='Enter')ask()">
+      <button id="askBtn" onclick="ask()">검색 + 답변</button>
+    </div>
+    <div class="examples" id="examples">
+      <span class="exq" onclick="fillAsk(this)">경조사 휴가는 며칠인가요?</span>
+      <span class="exq" onclick="fillAsk(this)">재직 3년이면 연가가 며칠인가요?</span>
+      <span class="exq" onclick="fillAsk(this)">출퇴근 기록 소급 등록은 언제까지 가능한가요?</span>
+    </div>
+    <p class="msg" id="askMsg"></p>
+  </div>
+
+  <!-- 대화 -->
+  <div class="thread" id="thread"></div>
+
+  <footer>
+    RAG 샌드박스 · <code>data/</code> → <code>vector_db.json</code> → AI ·
+    코드를 열어 마음대로 고쳐 보세요
+  </footer>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// 서버(app.py)와 대화하는 부분
+// ─────────────────────────────────────────────
+async function api(path, options) {
+  const resp = await fetch(path, options);
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error || "알 수 없는 오류");
+  return data;
+}
+
+async function refresh() {
+  const s = await api("/api/status");
+  document.getElementById("fileCount").textContent = s.files.length;
+  document.getElementById("chunkCount").textContent = s.chunks;
+  document.getElementById("dbState").textContent = s.db_exists ? "준비됨" : "없음";
+  const isGemini = s.backend === "gemini";
+  const badge = document.getElementById("backend");
+  if (!s.ai_ready) {
+    badge.textContent = "⚠️ AI 미연결 — .env에 키를 넣어 주세요";
+    document.getElementById("aiName").textContent = "미연결";
+  } else {
+    badge.textContent = isGemini ? "🌐 Gemini · 로컬 모드" : "☁️ AWS Bedrock · EC2 모드";
+    document.getElementById("aiName").textContent = isGemini ? "Gemini" : "Bedrock";
+  }
+  document.getElementById("fileList").innerHTML =
+    s.files.map(f => `<span class="chip">📄 ${f}</span>`).join("");
+  // 파이프라인 노드 불 켜기
+  toggle("nFiles", s.files.length > 0);
+  toggle("nChunks", s.chunks > 0);
+  toggle("nDb", s.db_exists);
+  toggle("nAi", s.db_exists);
+}
+function toggle(id, on) { document.getElementById(id).classList.toggle("on", on); }
+
+function show(id, text, isError) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = "msg" + (isError ? " error" : "");
+}
+
+// ── 업로드 (클릭 + 드래그&드롭) ──
+const dz = document.getElementById("dropzone");
+const fileInput = document.getElementById("fileInput");
+dz.onclick = () => fileInput.click();
+fileInput.onchange = () => upload(fileInput.files);
+dz.ondragover = e => { e.preventDefault(); dz.classList.add("over"); };
+dz.ondragleave = () => dz.classList.remove("over");
+dz.ondrop = e => { e.preventDefault(); dz.classList.remove("over"); upload(e.dataTransfer.files); };
+
+async function upload(files) {
+  if (!files.length) return;
+  const form = new FormData();
+  for (const f of files) form.append("files", f);
+  try {
+    const r = await api("/api/upload", { method: "POST", body: form });
+    show("uploadMsg", `저장 완료: ${r.saved.join(", ")} — 이제 [DB 만들기]를 눌러 주세요.`);
+    refresh();
+  } catch (e) { show("uploadMsg", e.message, true); }
+}
+
+// ── 벡터디비 ──
+async function rebuild() {
+  const btn = document.getElementById("buildBtn");
+  btn.disabled = true;
+  show("dbMsg", "문서를 쪼개고 벡터로 바꾸는 중… (문서가 많으면 시간이 걸립니다)");
+  try {
+    const r = await api("/api/rebuild", { method: "POST" });
+    show("dbMsg", `완료! 문서 ${r.files}개 → 청크 ${r.chunks}개를 벡터디비에 저장했습니다.`);
+    refresh();
+  } catch (e) { show("dbMsg", e.message, true); }
+  btn.disabled = false;
+}
+async function resetDb() {
+  await api("/api/reset", { method: "POST" });
+  show("dbMsg", "벡터디비를 초기화했습니다. (vector_db.json 삭제됨)");
+  refresh();
+}
+
+// ── 질문 → 채팅형 답변 ──
+function fillAsk(el) {
+  document.getElementById("question").value = el.textContent;
+  ask();
+}
+
+// 아주 작은 마크다운 표시기 (굵게·제목·목록만)
+function md(text) {
+  let h = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  h = h.replace(/^#{1,2} (.*)$/gm, "<h3>$1</h3>")
+       .replace(/^#{3,} (.*)$/gm, "<h4>$1</h4>")
+       .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+       .replace(/^[-•*] (.*)$/gm, "<li>$1</li>")
+       .replace(/(?:<li>.*<\/li>\n?)+/g, m => "<ul>" + m + "</ul>");
+  return h.split(/\n{2,}/).map(p => /^<(h3|h4|ul)/.test(p) ? p : "<p>" + p.replace(/\n/g, "<br>") + "</p>").join("");
+}
+
+async function ask() {
+  const q = document.getElementById("question").value.trim();
+  if (!q) return show("askMsg", "질문을 입력해 주세요.", true);
+  show("askMsg", "");
+  const btn = document.getElementById("askBtn");
+  btn.disabled = true;
+
+  const thread = document.getElementById("thread");
+  thread.insertAdjacentHTML("beforeend", `<div class="bubble-q"></div>`);
+  thread.lastElementChild.textContent = q;
+  thread.insertAdjacentHTML("beforeend",
+    `<div class="bubble-a"><div class="avatar">🤖</div>
+       <div class="body"><span class="dots"><span></span><span></span><span></span></span></div></div>`);
+  const body = thread.lastElementChild.querySelector(".body");
+  body.scrollIntoView({ behavior: "smooth", block: "end" });
+
+  try {
+    const r = await api("/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: q }),
+    });
+    const chunksHtml = r.chunks.map((c, i) => {
+      const d = document.createElement("div");
+      d.textContent = c.text;   // 문서 내용은 안전하게 텍스트로
+      return `<div class="chunk">
+        <div class="meta">근거 #${i + 1} · ${c.source}
+          <span class="bar"><i style="width:${Math.round(c.score * 100)}%"></i></span>
+          <span style="font-weight:600;color:var(--muted)">${c.score}</span></div>${d.innerHTML}</div>`;
+    }).join("");
+    body.innerHTML = md(r.answer) +
+      `<details class="src"><summary>근거 청크 ${r.chunks.length}개 보기</summary>${chunksHtml}</details>`;
+  } catch (e) {
+    body.innerHTML = `<span style="color:#D14343;font-weight:600"></span>`;
+    body.firstChild.textContent = "⚠️ " + e.message;
+  }
+  body.scrollIntoView({ behavior: "smooth", block: "end" });
+  document.getElementById("question").value = "";
+  btn.disabled = false;
+}
+
+refresh();
+</script>
+</body>
+</html>
