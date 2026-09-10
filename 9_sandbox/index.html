@@ -226,7 +226,7 @@
     padding: 16px; margin-bottom: 12px;
   }
   .chatwin:empty::before {
-    content: "벡터디비를 만든 뒤, 문서에 대해 무엇이든 물어보세요 🙌";
+    content: "벡터디비를 만든 뒤, 문서에 대해 무엇이든 물어보세요";
     margin: auto; color: var(--muted); font-size: 14px;
   }
   .bubble-q {
@@ -388,10 +388,9 @@
   <div class="page active" id="page-home">
     <div class="card welcome">
       <b>내가 넣은 문서만 읽고 대답하는 나만의 AI 검색기</b>입니다.
-      완성품이 아니라 <b>출발점</b>이에요 — 코드를 몰라도
-      <b>당신의 AI 에이전트(Codex·Claude)에게 부탁해서</b> 구성을 바꿔 보세요.
-      제목·색·말투부터 아래의 기술 부품 교체까지, 전부 말로 됩니다.
-      망가지면 다시 다운로드하면 그만이에요.
+      완성품이 아니라 <b>출발점</b>입니다 — 코드를 몰라도
+      <b>AI 에이전트(Codex·Claude)에게 부탁해</b> 제목·말투부터 기술 부품 교체까지
+      직접 바꿔 가며, RAG의 구조를 이해하고 자기 업무 서비스로 발전시켜 보세요.
     </div>
     <div class="story">
       <div class="card"><div class="emoji">📚</div><h3>책꽂이</h3>
@@ -440,12 +439,12 @@
       </div>
     </div>
     <div class="card" style="margin-top:16px">
-      <h2>🚀 지금은 장난감 크기 — 실무에서는 이렇게 바뀝니다</h2>
+      <h2>🚀 지금은 최소 구성 — 실무에서는 이렇게 확장됩니다</h2>
       <p style="font-size:13.5px;color:var(--muted);line-height:1.7;margin-bottom:12px">
         이 앱의 모든 부품은 실제 AI 서비스의 축소판입니다.
-        에이전트에게 부탁하면 진짜 부품으로 갈아끼울 수 있어요.</p>
+        에이전트에게 부탁하면 실무용 부품으로 교체할 수 있습니다.</p>
       <table class="maptable">
-        <tr><th>이 샌드박스에서는</th><th>실무·운영 환경에서는</th></tr>
+        <tr><th>이 실습 앱에서는</th><th>실무·운영 환경에서는</th></tr>
         <tr><td>📁 <code>data/</code> 폴더에 문서 몇 개</td>
             <td><b>S3, 구글 드라이브, 사내 문서시스템</b>과 연동해 자동 수집</td></tr>
         <tr><td>📄 ZIP 열어 글자만 줍는 변환 (<code>extract.py</code>)</td>
@@ -466,8 +465,8 @@
       <p class="upgrade-tip">💬 에이전트에게 이렇게 부탁해 보세요 —
         <i>"벡터디비를 Chroma로 바꿔줘"</i>, <i>"서버를 FastAPI로 바꿔줘"</i>.
         이때부터는 pip install(외부 패키지)이 필요해집니다.
-        그 문턱을 넘는 순간이 진짜 개발의 시작이에요.
-        (수업에서 만난 Chroma와 Bedrock Knowledge Base가 바로 이 서랍의 진짜 버전입니다)</p>
+        그 문턱을 넘는 순간이 실제 개발의 시작입니다.
+        (수업에서 만난 Chroma와 Bedrock Knowledge Base가 바로 이 벡터디비의 실무 버전입니다)</p>
     </div>
   </div>
 
@@ -604,8 +603,8 @@
   </div>
 
   <footer>
-    RAG 샌드박스 · <code>data/</code> → <code>vector_db.json</code> → AI ·
-    코드를 열어 마음대로 고쳐 보세요
+    RAG 실습 앱 · <code>data/</code> → <code>vector_db.json</code> → AI ·
+    모든 코드는 이 폴더 안에 있습니다
   </footer>
 </div>
 

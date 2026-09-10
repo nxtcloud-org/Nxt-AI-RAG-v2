@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RAG 샌드박스 설명서 — 아주 쉽게</title>
+<title>RAG 실습 앱 설명서 — 아주 쉽게</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
   :root {
@@ -115,8 +115,8 @@
 
 <div class="hero">
   <div class="wrap">
-    <h1>📖 RAG 샌드박스, 아주 쉬운 설명서</h1>
-    <p>내 문서를 읽고 대답하는 나만의 AI — 부숴도 괜찮은 모래놀이터입니다</p>
+    <h1>📖 RAG 실습 앱, 아주 쉬운 설명서</h1>
+    <p>내 문서를 읽고 대답하는 나만의 AI — 구조를 이해하고 직접 확장해 보는 실습 앱입니다</p>
     <a class="btn" href="/">앱 화면으로 돌아가기 →</a>
   </div>
 </div>
@@ -127,11 +127,11 @@
     <h2><span class="num">1</span>이게 뭐예요?</h2>
     <div class="card lead">
       <b>내가 넣은 문서만 읽고 대답하는 작은 AI 검색기</b>입니다.<br>
-      완성품이 아니라 <b>출발점</b>이에요 — 코드를 몰라도
-      <b>당신의 AI 에이전트(Codex·Claude)에게 부탁해서</b> 구성을 바꿔 보세요.
-      제목·색·말투부터 벡터디비·서버 같은 기술 부품 교체까지 전부 말로 됩니다.
-      망가지면 다시 다운로드하면 그만이에요.
-      (지금 부품이 실무에서 뭐로 바뀌는지는 앱의 🏠 홈 탭에 표로 정리되어 있어요)
+      완성품이 아니라 <b>출발점</b>입니다 — 코드를 몰라도
+      <b>AI 에이전트(Codex·Claude)에게 부탁해</b> 제목·말투부터
+      벡터디비·서버 같은 기술 부품 교체까지 직접 바꿔 가며,
+      RAG의 구조를 이해하고 자기 업무 서비스로 발전시켜 보세요.
+      (지금 부품이 실무에서 무엇으로 바뀌는지는 앱의 🏠 홈 탭에 표로 정리되어 있습니다)
     </div>
   </section>
 
@@ -276,15 +276,16 @@
       실무의 AWS Bedrock Guardrails가 하는 일의 축소판입니다.</p>
     </details>
     <details>
-      <summary>완전히 고장 냈어요 😱</summary>
-      <p>축하해요, 제대로 실험한 거예요! 샌드박스니까 <b>폴더를 지우고 다시 다운로드</b>하면 처음 상태로 돌아옵니다.
-      뭘 하다가 고장 났는지 기억해두면 그게 가장 좋은 공부예요.</p>
+      <summary>수정하다가 앱이 실행되지 않아요</summary>
+      <p><b>폴더를 지우고 다시 다운로드</b>하면 초기 상태로 복구됩니다.
+      복구 전에, 어떤 수정에서 문제가 생겼는지 에이전트에게 오류 메시지와 함께 보여주면
+      원인을 찾아 되돌릴 수 있고 — 그 과정 자체가 구조를 이해하는 좋은 학습이 됩니다.</p>
     </details>
   </section>
 
   <footer>
-    RAG 샌드박스 · 서울대 행정 AX 실무 리더 양성과정 실습 자료 ·
-    문서는 <code>data/</code>, 서랍은 <code>vector_db.json</code>, 다리는 <code>app.py</code>
+    RAG 실습 앱 · 서울대 행정 AX 실무 리더 양성과정 실습 자료 ·
+    문서는 <code>data/</code>, 벡터디비는 <code>vector_db.json</code>, 서버는 <code>app.py</code>
   </footer>
 </div>
 </body>
