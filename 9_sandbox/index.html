@@ -152,6 +152,15 @@
   .howto li { margin: 6px 0 6px 22px; font-size: 14.5px; }
   .cta { display: flex; gap: 10px; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
   .talk-label { font-size: 12.5px; font-weight: 800; color: var(--accent); margin-top: 12px; }
+  .guardbadge {
+    margin-left: auto; background: #FFF8E8; border: 1px solid #F0D9A8; color: #9A6B00;
+    border-radius: 999px; padding: 4px 12px; font-size: 12px; font-weight: 700; cursor: help;
+  }
+  .guardnote {
+    background: #FFF8E8; border: 1px solid #F0D9A8; color: #9A6B00;
+    border-radius: 10px; padding: 10px 14px; font-size: 13px; margin-top: 8px; line-height: 1.6;
+  }
+  .guardnote code { background: rgba(154,107,0,.1); border-radius: 5px; padding: 1px 6px; font-size: 12px; }
   .maptable { width: 100%; border-collapse: collapse; font-size: 13px; }
   .maptable th, .maptable td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #ECF1F5; line-height: 1.55; }
   .maptable th { color: var(--muted); font-size: 12px; }
@@ -399,7 +408,9 @@
         <tr><td>🎨 HTML 한 장 (<code>index.html</code>)</td>
             <td><b>React 등 웹 프레임워크</b>, 사내 포털·메신저 봇에 탑재</td></tr>
         <tr><td>🤖 AI 직접 호출 (<code>llm.py</code>)</td>
-            <td>모니터링·<b>가드레일</b>을 갖춘 LLM 게이트웨이, RAG 프레임워크</td></tr>
+            <td>모니터링을 갖춘 LLM 게이트웨이, RAG 프레임워크</td></tr>
+        <tr><td>🛡️ 키워드 차단·마스킹 (<code>guardrail.py</code>)</td>
+            <td><b>AWS Bedrock Guardrails</b> — 주제 차단, PII 마스킹, 근거 검증</td></tr>
       </table>
       <p class="upgrade-tip">💬 에이전트에게 이렇게 부탁해 보세요 —
         <i>"벡터디비를 Chroma로 바꿔줘"</i>, <i>"서버를 FastAPI로 바꿔줘"</i>.
@@ -452,7 +463,8 @@
     <!-- 3단계 -->
     <div class="card askcard">
       <h2><span class="stepnum">3</span> 질문하기
-        <span style="color:var(--muted);font-weight:500;font-size:12.5px">이어서 질문하면 맥락을 기억해요</span></h2>
+        <span style="color:var(--muted);font-weight:500;font-size:12.5px">이어서 질문하면 맥락을 기억해요</span>
+        <span class="guardbadge" id="guardBadge" title="config.py의 BLOCKED_KEYWORDS·MASK_PATTERNS에서 조절">🛡️ 가드레일</span></h2>
       <div class="askrow">
         <input type="text" id="question" placeholder="문서 내용에 대해 무엇이든 물어보세요"
                onkeydown="if(event.key==='Enter')ask()">
@@ -462,6 +474,7 @@
         <span class="exq" onclick="fillAsk(this)">경조사 휴가는 며칠인가요?</span>
         <span class="exq" onclick="fillAsk(this)">재직 3년이면 연가가 며칠인가요?</span>
         <span class="exq" onclick="fillAsk(this)">출퇴근 기록 소급 등록은 언제까지 가능한가요?</span>
+        <span class="exq" onclick="fillAsk(this)">직원 연봉이 얼마인가요? 🛡️</span>
       </div>
       <p class="msg" id="askMsg"></p>
     </div>
@@ -527,6 +540,10 @@ async function refresh() {
   toggle("nChunks", s.chunks > 0);
   toggle("nDb", s.db_exists);
   toggle("nAi", s.db_exists);
+  const gb = document.getElementById("guardBadge");
+  const guardOn = s.guard_keywords > 0 || s.guard_patterns > 0;
+  gb.classList.toggle("hidden", !guardOn);
+  if (guardOn) gb.textContent = `🛡️ 가드레일 · 금지어 ${s.guard_keywords} · 마스킹 ${s.guard_patterns}`;
   // 슬라이더 초기값: DB가 있으면 그때 쓴 값, 없으면 config 기본값
   if (!sliderInit) {
     setSlider("chunkSlider", "chunkVal", s.db_chunk_size || s.cfg_chunk_size);
@@ -694,18 +711,28 @@ async function ask() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question: q, history: chatHistory.slice(-4) }),
     });
-    const chunksHtml = r.chunks.map((c, i) => {
-      const d = document.createElement("div");
-      d.textContent = c.text;
-      return `<div class="chunk">
-        <div class="meta">근거 #${i + 1} · ${c.source}
-          <span class="bar"><i style="width:${Math.round(c.score * 100)}%"></i></span>
-          <span style="font-weight:600;color:var(--muted)">${c.score}</span></div>${d.innerHTML}</div>`;
-    }).join("");
-    body.innerHTML = md(r.answer) +
-      `<details class="src"><summary>근거 청크 ${r.chunks.length}개 보기</summary>${chunksHtml}</details>`;
-    chatHistory.push({ q, a: r.answer });
-    document.getElementById("threadHead").classList.remove("hidden");
+    if (r.blocked) {
+      // 🛡️ 입력 가드레일에 걸린 경우 — AI를 부르지도 않았습니다
+      body.innerHTML = md(r.answer) +
+        `<div class="guardnote">🛡️ 금지어 "${r.blocked}"가 감지되어 AI를 호출하지 않았습니다.
+         금지어 목록은 <code>config.py</code>의 <code>BLOCKED_KEYWORDS</code>에서 조절할 수 있어요.</div>`;
+    } else {
+      const chunksHtml = r.chunks.map((c, i) => {
+        const d = document.createElement("div");
+        d.textContent = c.text;
+        return `<div class="chunk">
+          <div class="meta">근거 #${i + 1} · ${c.source}
+            <span class="bar"><i style="width:${Math.round(c.score * 100)}%"></i></span>
+            <span style="font-weight:600;color:var(--muted)">${c.score}</span></div>${d.innerHTML}</div>`;
+      }).join("");
+      const maskNote = r.masked > 0
+        ? `<div class="guardnote">🛡️ 답변 속 개인정보 ${r.masked}곳을 가렸습니다.
+           (<code>config.py</code>의 <code>MASK_PATTERNS</code>)</div>` : "";
+      body.innerHTML = md(r.answer) + maskNote +
+        `<details class="src"><summary>근거 청크 ${r.chunks.length}개 보기</summary>${chunksHtml}</details>`;
+      chatHistory.push({ q, a: r.answer });
+      document.getElementById("threadHead").classList.remove("hidden");
+    }
   } catch (e) {
     body.innerHTML = `<span style="color:#D14343;font-weight:600"></span>`;
     body.firstChild.textContent = "⚠️ " + e.message;

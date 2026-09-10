@@ -21,6 +21,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
 import config
+import guardrail
 import llm
 import rag
 
@@ -79,6 +80,12 @@ class Handler(BaseHTTPRequestHandler):
                 question = data["question"].strip()
                 if not question:
                     raise RuntimeError("질문을 입력해 주세요.")
+                # 🛡️ 가드레일 1단계: 금지 키워드면 AI를 부르지 않고 거부
+                hit = guardrail.check_input(question)
+                if hit:
+                    self._json({"answer": config.BLOCK_MESSAGE, "chunks": [],
+                                "blocked": hit, "masked": 0})
+                    return
                 # 이전 대화(최근 4턴)를 프롬프트에 넣어 맥락을 기억하게 합니다
                 turns = [f"사용자: {t['q']}\nAI: {t['a'][:400]}"
                          for t in (data.get("history") or [])[-4:]]
@@ -90,7 +97,10 @@ class Handler(BaseHTTPRequestHandler):
                 except KeyError:  # 프롬프트에서 {history}를 지웠어도 동작하게
                     prompt = config.PROMPT.format(context=context, question=question)
                 answer = llm.ask(prompt)                           # 2) AI 답변 생성
-                self._json({"answer": answer, "chunks": chunks})
+                # 🛡️ 가드레일 2단계: 답변 속 개인정보 패턴 가리기
+                answer, masked = guardrail.mask_output(answer)
+                self._json({"answer": answer, "chunks": chunks,
+                            "blocked": None, "masked": masked})
             elif self.path == "/api/upload":
                 self._json({"saved": self._save_upload(body)})
             elif self.path == "/api/sample":

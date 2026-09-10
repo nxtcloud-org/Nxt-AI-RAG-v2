@@ -233,6 +233,7 @@
         <span class="chip">제목을 "○○팀 규정 검색기"로 바꿔줘</span>
         <span class="chip">AI가 공문 말투로 답하게 해줘</span>
         <span class="chip">청크 크기를 줄이면 뭐가 달라져?</span>
+        <span class="chip">"예산" 질문에 답하지 않게 금지어를 추가해줘</span>
         <span class="chip">우리 부서 검색 서비스로 키우려면 뭐부터 해야 해?</span>
       </div>
     </div>
@@ -263,6 +264,13 @@
       <summary>설정을 바꿨는데 아무것도 안 변해요</summary>
       <p>두 가지를 확인하세요. <b>① 앱을 껐다(Ctrl+C) 다시 실행</b>했나요?
       <b>② CHUNK_SIZE를 바꿨다면 [DB 만들기]도 다시</b> 눌렀나요?</p>
+    </details>
+    <details>
+      <summary>어떤 질문에는 "답변하지 않도록 설정되어 있습니다"라고 나와요</summary>
+      <p>🛡️ <b>가드레일(안전장치)</b>이 작동한 거예요. 금지어가 든 질문은 AI를 부르기 전에 거부하고,
+      답변에 주민번호·전화번호 같은 개인정보가 있으면 가립니다.
+      <b>config.py의 BLOCKED_KEYWORDS와 MASK_PATTERNS</b>에서 직접 조절할 수 있어요.
+      실무의 AWS Bedrock Guardrails가 하는 일의 축소판입니다.</p>
     </details>
     <details>
       <summary>완전히 고장 냈어요 😱</summary>
