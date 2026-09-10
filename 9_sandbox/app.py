@@ -67,6 +67,10 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(guardrail.get_settings())
             elif url.path == "/api/samples":
                 self._json({"samples": rag.list_samples()})
+            elif url.path == "/api/examples":
+                self._json({"per_doc": config.EXAMPLE_QUESTIONS,
+                            "all": config.EXAMPLE_QUESTIONS_ALL,
+                            "default": config.EXAMPLE_QUESTIONS_DEFAULT})
             elif url.path == "/api/file":
                 name = parse_qs(url.query).get("name", [""])[0]
                 self._json(rag.read_file(name))
@@ -95,7 +99,7 @@ class Handler(BaseHTTPRequestHandler):
                 turns = [f"사용자: {t['q']}\nAI: {t['a'][:400]}"
                          for t in (data.get("history") or [])[-4:]]
                 history = "\n\n".join(turns) if turns else "(없음)"
-                chunks = rag.search(question)                      # 1) 벡터 검색
+                chunks = rag.search(question, data.get("source"))  # 1) 벡터 검색 (문서 선택 시 필터)
                 context = "\n\n---\n\n".join(c["text"] for c in chunks)
                 try:
                     prompt = config.PROMPT.format(history=history, context=context, question=question)

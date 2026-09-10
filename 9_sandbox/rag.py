@@ -148,11 +148,17 @@ def db_info():
         info["db_backend"] = db.get("backend")
         info["db_chunk_size"] = db.get("chunk_size")
         info["db_chunk_overlap"] = db.get("chunk_overlap")
+        info["db_sources"] = sorted({c["source"] for c in db["chunks"]})
+    else:
+        info["db_sources"] = []
     return info
 
 
-def search(question):
-    """질문을 벡터로 바꿔, 저장된 모든 청크와 비교해 가장 비슷한 TOP_K개를 찾습니다."""
+def search(question, source=None):
+    """질문을 벡터로 바꿔, 저장된 청크와 비교해 가장 비슷한 TOP_K개를 찾습니다.
+
+    source를 주면 그 문서의 청크만 검색합니다 (실무 KB의 메타데이터 필터와 같은 원리).
+    """
     if not os.path.exists(DB_PATH):
         raise RuntimeError("벡터디비가 아직 없습니다. [DB 만들기] 버튼을 먼저 눌러 주세요.")
     with open(DB_PATH, encoding="utf-8") as f:
@@ -161,8 +167,14 @@ def search(question):
         raise RuntimeError(
             f"이 벡터디비는 {db.get('backend')} 임베딩으로 만들어져 지금 환경({llm.BACKEND})과 호환되지 않습니다. "
             "[DB 초기화] 후 [DB 만들기]를 다시 눌러 주세요.")
+    chunks = db["chunks"]
+    if source:
+        chunks = [c for c in chunks if c["source"] == source]
+        if not chunks:
+            raise RuntimeError(
+                f"'{source}'는 아직 벡터디비에 없습니다. ⚡ 실습 탭에서 [DB 만들기]를 다시 눌러 주세요.")
     qv = llm.embed(question)
     scored = [{"source": c["source"], "text": c["text"], "score": round(cosine(qv, c["vector"]), 3)}
-              for c in db["chunks"]]
+              for c in chunks]
     scored.sort(key=lambda c: c["score"], reverse=True)
     return scored[: config.TOP_K]

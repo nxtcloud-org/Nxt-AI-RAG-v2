@@ -534,13 +534,9 @@
         <span class="guardbadge" id="guardBadge" title="🛡️ 가드레일 탭에서 조절할 수 있어요">🛡️ 가드레일</span>
         <button class="ghost hidden" id="clearBtn" style="padding:6px 12px;font-size:12px" onclick="clearChat()">🧹 새 대화</button>
       </h2>
+      <div class="chips" id="docSelect" style="margin-bottom:10px"></div>
       <div class="chatwin" id="thread"></div>
-      <div class="examples">
-        <span class="exq" onclick="fillAsk(this)">경조사 휴가는 며칠인가요?</span>
-        <span class="exq" onclick="fillAsk(this)">재직 3년이면 연가가 며칠인가요?</span>
-        <span class="exq" onclick="fillAsk(this)">출퇴근 기록 소급 등록은 언제까지 가능한가요?</span>
-        <span class="exq" onclick="fillAsk(this)">직원 연봉이 얼마인가요? 🛡️</span>
-      </div>
+      <div class="examples" id="exampleBox"></div>
       <div class="askrow" style="margin-top:10px">
         <input type="text" id="question" placeholder="문서 내용에 대해 무엇이든 물어보세요"
                onkeydown="if(event.key==='Enter')ask()">
@@ -650,9 +646,11 @@ async function refresh() {
     document.getElementById("aiName").textContent = isGemini ? "Gemini" : "Bedrock";
   }
   currentFiles = s.files;
+  dbSources = s.db_sources || [];
   document.getElementById("fileList").innerHTML =
     s.files.map(f => `<span class="chip">📄 ${f}</span>`).join("");
   renderSampleList();
+  renderDocSelect();
   toggle("nFiles", s.files.length > 0);
   toggle("nChunks", s.chunks > 0);
   toggle("nDb", s.db_exists);
@@ -890,6 +888,50 @@ function renderViewer() {
 }
 function toggleRaw() { viewerShowRaw = !viewerShowRaw; renderViewer(); }
 
+// ── 챗봇: 문서 선택 + 문서별 예시 질문 ──
+let selectedDoc = null;      // null = 전체 문서에서 검색
+let dbSources = [];          // 벡터디비에 실제로 들어 있는 문서들
+let examples = { per_doc: {}, all: [], default: [] };
+
+async function loadExamples() {
+  examples = await api("/api/examples");
+  renderDocSelect();
+}
+
+function renderDocSelect() {
+  const box = document.getElementById("docSelect");
+  if (!box) return;
+  if (selectedDoc && !currentFiles.includes(selectedDoc)) selectedDoc = null;
+  box.innerHTML =
+    `<span class="chip click${selectedDoc === null ? " on" : ""}" onclick="selectDoc(null)">🌐 전체 문서</span>` +
+    currentFiles.map(f => {
+      const inDb = dbSources.includes(f);
+      return `<span class="chip click${selectedDoc === f ? " on" : ""}" onclick="selectDoc('${f}')">` +
+        `${inDb ? "📄" : "⚠️"} ${f}</span>`;
+    }).join("");
+  renderExamples();
+}
+
+function selectDoc(name) {
+  selectedDoc = name;
+  renderDocSelect();
+}
+
+function renderExamples() {
+  const box = document.getElementById("exampleBox");
+  if (!box) return;
+  // 선택한 문서가 아직 벡터디비에 없으면 → 먼저 DB부터 만들라고 안내
+  if (selectedDoc && !dbSources.includes(selectedDoc)) {
+    box.innerHTML = `<span class="msg" style="margin:0">⚠️ '${selectedDoc}'은 아직 벡터디비에 반영되지 않았어요.</span>
+      <span class="exq" onclick="goLab()">⚡ 실습 탭에서 [DB 만들기] 하러 가기</span>`;
+    return;
+  }
+  const qs = selectedDoc
+    ? (examples.per_doc[selectedDoc] || examples.default)
+    : examples.all;
+  box.innerHTML = qs.map(q => `<span class="exq" onclick="fillAsk(this)">${q}</span>`).join("");
+}
+
 // ── 질문 → 채팅형 답변 (맥락 기억) ──
 let chatHistory = [];   // [{q, a}] — 최근 대화를 함께 보내 맥락을 잇습니다
 
@@ -929,6 +971,9 @@ function md(text) {
 async function ask() {
   const q = document.getElementById("question").value.trim();
   if (!q) return show("askMsg", "질문을 입력해 주세요.", "error");
+  if (selectedDoc && !dbSources.includes(selectedDoc)) {
+    return show("askMsg", `'${selectedDoc}'은 아직 벡터디비에 없어요 — ⚡ 실습 탭에서 [DB 만들기]를 먼저 눌러 주세요.`, "error");
+  }
   show("askMsg", "");
   const btn = document.getElementById("askBtn");
   btn.disabled = true;
@@ -946,7 +991,7 @@ async function ask() {
     const r = await api("/api/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: q, history: chatHistory.slice(-4) }),
+      body: JSON.stringify({ question: q, history: chatHistory.slice(-4), source: selectedDoc }),
     });
     if (r.blocked) {
       // 🛡️ 입력 가드레일에 걸린 경우 — AI를 부르지도 않았습니다
@@ -1079,6 +1124,7 @@ async function resetGuard() {
 
 refresh();
 loadSampleList();
+loadExamples();
 </script>
 </body>
 </html>
