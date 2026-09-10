@@ -10,6 +10,7 @@
 import json
 import math
 import os
+import unicodedata
 
 import config
 import extract
@@ -22,17 +23,34 @@ DB_PATH = os.path.join(BASE_DIR, "vector_db.json")  # 🗄️ 벡터디비
 SAMPLE_DIR = os.path.join(BASE_DIR, "samples")   # 🧪 예시 문서 보관함
 
 
+def nfc(name):
+    """한글 파일명 정규화 — 맥에서 압축을 풀면 자모가 분리된 형태(NFD)가 되어
+    눈에는 같아 보여도 다른 글자가 됩니다. 항상 완성형(NFC)으로 통일합니다."""
+    return unicodedata.normalize("NFC", name)
+
+
+def _resolve(directory, name):
+    """정규화(NFC/NFD)가 달라도 실제 디스크의 파일을 찾아 (표준이름, 경로)를 돌려줍니다."""
+    name = nfc(os.path.basename(name))
+    path = os.path.join(directory, name)
+    if not os.path.exists(path) and os.path.isdir(directory):
+        for f in os.listdir(directory):
+            if nfc(f) == name:
+                return name, os.path.join(directory, f)
+    return name, path
+
+
 def list_files():
     """data 폴더의 문서 목록"""
     os.makedirs(DATA_DIR, exist_ok=True)
-    return sorted(f for f in os.listdir(DATA_DIR) if f.endswith((".md", ".txt")))
+    return sorted(nfc(f) for f in os.listdir(DATA_DIR) if f.endswith((".md", ".txt")))
 
 
 def list_samples():
     """samples 폴더의 예시 문서 목록 (여러 형식 — 부서 유형별 샘플)"""
     if not os.path.isdir(SAMPLE_DIR):
         return []
-    return sorted(f for f in os.listdir(SAMPLE_DIR)
+    return sorted(nfc(f) for f in os.listdir(SAMPLE_DIR)
                   if not f.startswith(".") and "." in f)
 
 
@@ -42,13 +60,13 @@ def load_samples(name=None):
     name을 주면 그 파일 하나만, 없으면 전부.
     xlsx·hwpx 등은 업로드와 똑같이 extract를 거쳐 텍스트(.md)로 변환해 저장합니다.
     """
-    names = [os.path.basename(name)] if name else list_samples()
+    names = [nfc(os.path.basename(name))] if name else list_samples()
     if not names:
         raise RuntimeError("samples 폴더에 예시 문서가 없습니다.")
     os.makedirs(DATA_DIR, exist_ok=True)
     saved = []
     for n in names:
-        path = os.path.join(SAMPLE_DIR, n)
+        n, path = _resolve(SAMPLE_DIR, n)
         if not os.path.exists(path):
             raise RuntimeError(f"'{n}' 예시 문서를 찾을 수 없습니다.")
         with open(path, "rb") as f:
@@ -96,7 +114,8 @@ def build_db(chunk_size=None, chunk_overlap=None):
     overlap = config.CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
     entries = []
     for name in files:
-        with open(os.path.join(DATA_DIR, name), encoding="utf-8") as f:
+        name, path = _resolve(DATA_DIR, name)
+        with open(path, encoding="utf-8") as f:
             text = f.read()
         for chunk in split_text(text, size, overlap):
             entries.append({"source": name, "text": chunk, "vector": llm.embed(chunk)})
@@ -119,8 +138,7 @@ def get_chunks():
 
 def delete_file(name):
     """data 폴더에서 문서를 삭제합니다 (벡터디비 반영은 [DB 만들기]를 다시)"""
-    name = os.path.basename(name)
-    path = os.path.join(DATA_DIR, name)
+    name, path = _resolve(DATA_DIR, name)
     if not name.endswith((".md", ".txt")) or not os.path.exists(path):
         raise RuntimeError(f"'{name}' 문서를 찾을 수 없습니다.")
     os.remove(path)
@@ -129,8 +147,7 @@ def delete_file(name):
 
 def read_file(name):
     """data 폴더 문서의 원문 반환 (경로 탈출 방지를 위해 파일명만 허용)"""
-    name = os.path.basename(name)
-    path = os.path.join(DATA_DIR, name)
+    name, path = _resolve(DATA_DIR, name)
     if not os.path.exists(path) or not name.endswith((".md", ".txt")):
         raise RuntimeError(f"'{name}' 문서를 찾을 수 없습니다.")
     with open(path, encoding="utf-8") as f:
@@ -186,7 +203,8 @@ def search(question, source=None):
             "[DB 초기화] 후 [DB 만들기]를 다시 눌러 주세요.")
     chunks = db["chunks"]
     if source:
-        chunks = [c for c in chunks if c["source"] == source]
+        source = nfc(source)
+        chunks = [c for c in chunks if nfc(c["source"]) == source]
         if not chunks:
             raise RuntimeError(
                 f"'{source}'는 아직 벡터디비에 없습니다. ⚡ 실습 탭에서 [DB 만들기]를 다시 눌러 주세요.")

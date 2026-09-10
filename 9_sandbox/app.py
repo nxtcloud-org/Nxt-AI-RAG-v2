@@ -166,8 +166,8 @@ class Handler(BaseHTTPRequestHandler):
             if b"filename=" not in part:
                 continue
             header, _, content = part.partition(b"\r\n\r\n")
-            name = os.path.basename(
-                re.search(rb'filename="([^"]*)"', header).group(1).decode("utf-8", "ignore"))
+            name = rag.nfc(os.path.basename(
+                re.search(rb'filename="([^"]*)"', header).group(1).decode("utf-8", "ignore")))
             if not name:
                 continue
             if content.endswith(b"\r\n"):

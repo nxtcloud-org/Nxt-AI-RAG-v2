@@ -919,6 +919,10 @@ let examples = { per_doc: {}, all: [], default: [] };
 
 async function loadExamples() {
   examples = await api("/api/examples");
+  // 한글 정규화(NFC/NFD) 차이로 매칭이 어긋나지 않게 키를 통일
+  const norm = {};
+  for (const k in examples.per_doc) norm[k.normalize("NFC")] = examples.per_doc[k];
+  examples.per_doc = norm;
   renderDocSelect();
 }
 
@@ -951,7 +955,7 @@ function renderExamples() {
     return;
   }
   const qs = selectedDoc
-    ? (examples.per_doc[selectedDoc] || examples.default)
+    ? (examples.per_doc[selectedDoc.normalize("NFC")] || examples.default)
     : examples.all;
   box.innerHTML = qs.map(q => `<span class="exq" onclick="fillAsk(this)">${q}</span>`).join("");
 }
