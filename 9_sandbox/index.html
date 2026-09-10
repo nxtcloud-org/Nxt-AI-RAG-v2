@@ -151,6 +151,18 @@
   .howto { margin-top: 16px; }
   .howto li { margin: 6px 0 6px 22px; font-size: 14.5px; }
   .cta { display: flex; gap: 10px; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
+  .maptable { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .maptable th, .maptable td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #ECF1F5; line-height: 1.55; }
+  .maptable th { color: var(--muted); font-size: 12px; }
+  .maptable td:first-child { width: 42%; color: var(--muted); }
+  .maptable td b { color: var(--accent); }
+  .maptable code { background: #EDF2F6; border-radius: 5px; padding: 1px 6px; font-size: 12px; }
+  .upgrade-tip {
+    background: linear-gradient(135deg, rgba(11,114,133,.07), rgba(79,70,229,.07));
+    border: 1px solid rgba(14,140,150,.2); border-radius: 12px;
+    padding: 12px 16px; font-size: 13px; line-height: 1.7; margin-top: 12px;
+  }
+  .upgrade-tip i { color: var(--accent); font-weight: 700; font-style: normal; }
   a.linkbtn {
     display: inline-block; text-decoration: none; border-radius: 10px; padding: 11px 18px;
     font-size: 14px; font-weight: 700; background: #EDF2F6; color: var(--ink);
@@ -318,8 +330,10 @@
   <div class="page active" id="page-home">
     <div class="card welcome">
       <b>내가 넣은 문서만 읽고 대답하는 나만의 AI 검색기</b>입니다.
-      그리고 <b>샌드박스(모래놀이터)</b>예요 — 제목·색·말투를 바꾸고, 내 문서를 넣고,
-      코드를 고장 내도 됩니다. 망가지면 다시 다운로드하면 그만이에요.
+      완성품이 아니라 <b>출발점</b>이에요 — 코드를 몰라도
+      <b>당신의 AI 에이전트(Codex·Claude)에게 부탁해서</b> 구성을 바꿔 보세요.
+      제목·색·말투부터 아래의 기술 부품 교체까지, 전부 말로 됩니다.
+      망가지면 다시 다운로드하면 그만이에요.
     </div>
     <div class="story">
       <div class="card"><div class="emoji">📚</div><h3>책꽂이</h3>
@@ -342,6 +356,32 @@
         <button onclick="goLab()">⚡ 실습 시작하기</button>
         <a class="linkbtn" href="/guide">📖 더 자세한 설명서</a>
       </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>🚀 지금은 장난감 크기 — 실무에서는 이렇게 바뀝니다</h2>
+      <p style="font-size:13.5px;color:var(--muted);line-height:1.7;margin-bottom:12px">
+        이 앱의 모든 부품은 실제 AI 서비스의 축소판입니다.
+        에이전트에게 부탁하면 진짜 부품으로 갈아끼울 수 있어요.</p>
+      <table class="maptable">
+        <tr><th>이 샌드박스에서는</th><th>실무·운영 환경에서는</th></tr>
+        <tr><td>📁 <code>data/</code> 폴더에 문서 몇 개</td>
+            <td><b>S3, 구글 드라이브, 사내 문서시스템</b>과 연동해 자동 수집</td></tr>
+        <tr><td>✂️ 글자 수로 자르는 청크 (<code>rag.py</code>)</td>
+            <td><b>LangChain 스플리터</b>, Bedrock KB의 의미 단위 자동 청킹</td></tr>
+        <tr><td>🗄️ <code>vector_db.json</code> 파일 하나</td>
+            <td>오픈소스 <b>Chroma·FAISS</b> → 운영급 <b>OpenSearch·pgvector·Pinecone</b> → 완전관리형 <b>Bedrock Knowledge Base</b></td></tr>
+        <tr><td>🖥️ 표준 라이브러리 서버 (<code>app.py</code>)</td>
+            <td><b>FastAPI·Flask</b>, 또는 서버리스 <b>Lambda + API Gateway</b></td></tr>
+        <tr><td>🎨 HTML 한 장 (<code>index.html</code>)</td>
+            <td><b>React 등 웹 프레임워크</b>, 사내 포털·메신저 봇에 탑재</td></tr>
+        <tr><td>🤖 AI 직접 호출 (<code>llm.py</code>)</td>
+            <td>모니터링·<b>가드레일</b>을 갖춘 LLM 게이트웨이, RAG 프레임워크</td></tr>
+      </table>
+      <p class="upgrade-tip">💬 에이전트에게 이렇게 부탁해 보세요 —
+        <i>"벡터디비를 Chroma로 바꿔줘"</i>, <i>"서버를 FastAPI로 바꿔줘"</i>.
+        이때부터는 pip install(외부 패키지)이 필요해집니다.
+        그 문턱을 넘는 순간이 진짜 개발의 시작이에요.
+        (수업에서 만난 Chroma와 Bedrock Knowledge Base가 바로 이 서랍의 진짜 버전입니다)</p>
     </div>
   </div>
 
