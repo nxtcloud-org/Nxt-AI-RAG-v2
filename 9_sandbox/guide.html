@@ -17,17 +17,47 @@
       radial-gradient(900px 400px at 85% -10%, rgba(79,70,229,.10), transparent 60%),
       radial-gradient(800px 400px at 0% 10%, rgba(11,114,133,.10), transparent 55%),
       var(--bg);
-    color: var(--ink); padding-bottom: 80px; -webkit-font-smoothing: antialiased;
+    color: var(--ink); padding-bottom: 20px; -webkit-font-smoothing: antialiased;
     line-height: 1.7;
   }
   .wrap { max-width: 800px; margin: 0 auto; padding: 0 20px; }
   .hero {
     background: linear-gradient(120deg, var(--grad-a), var(--grad-b));
-    color: #fff; padding: 48px 0 56px; text-align: center;
+    color: #fff; padding: 30px 0 34px; text-align: center;
   }
-  .hero h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.6px; }
-  .hero p { margin-top: 10px; opacity: .88; font-size: 15.5px; }
+  .hero h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.6px; }
+  .hero p { margin-top: 8px; opacity: .88; font-size: 14.5px; }
   section { margin-top: 36px; }
+
+  /* ── 슬라이드 덱 (좌우로 부드럽게 넘기기) ── */
+  .deck { position: relative; margin-top: 22px; overflow: hidden; }
+  .slides {
+    display: flex; align-items: flex-start;
+    transition: transform .55s cubic-bezier(.22,.61,.36,1);
+  }
+  section.slide {
+    flex: 0 0 100%; min-width: 100%; margin-top: 0;
+    height: var(--slideH, 480px); overflow-y: auto;
+    padding: 4px 8px 24px 2px;
+  }
+  .navbtn {
+    position: absolute; top: 50%; transform: translateY(-50%); z-index: 5;
+    width: 44px; height: 44px; border-radius: 50%; border: 0; cursor: pointer;
+    background: #fff; color: var(--accent); font-size: 20px; font-weight: 800;
+    box-shadow: 0 6px 18px -6px rgba(16,31,46,.35); transition: opacity .2s, transform .2s;
+  }
+  .navbtn:hover { transform: translateY(-50%) scale(1.08); }
+  .navbtn:disabled { opacity: .25; cursor: default; transform: translateY(-50%); }
+  .navbtn.prev { left: 2px; }
+  .navbtn.next { right: 2px; }
+  .dots { display: flex; gap: 8px; justify-content: center; align-items: center; margin: 14px 0 4px; }
+  .dot {
+    width: 10px; height: 10px; border-radius: 6px; background: #C9D6E0;
+    cursor: pointer; transition: all .3s; border: 0; padding: 0;
+  }
+  .dot.on { width: 26px; background: linear-gradient(90deg, var(--grad-a), var(--grad-b)); }
+  .pginfo { font-size: 12.5px; color: var(--muted); margin-left: 10px; }
+  .swipehint { text-align: center; font-size: 12px; color: var(--muted); margin-top: 2px; }
   h2 { font-size: 21px; font-weight: 800; letter-spacing: -0.4px; margin-bottom: 14px; }
   h2 .num {
     display: inline-flex; align-items: center; justify-content: center;
@@ -109,7 +139,7 @@
     border: 1px solid rgba(14,140,150,.2); border-radius: 14px; padding: 16px 20px;
     font-size: 14px; margin-top: 14px;
   }
-  footer { text-align: center; margin-top: 44px; font-size: 12.5px; color: var(--muted); }
+  footer { text-align: center; margin-top: 14px; font-size: 12.5px; color: var(--muted); }
   a.btn {
     display: inline-block; margin-top: 16px; background: rgba(255,255,255,.16);
     border: 1px solid rgba(255,255,255,.4); color: #fff; text-decoration: none;
@@ -329,6 +359,62 @@ async function copyQS() {
   }
   document.getElementById("qsMsg").textContent = "복사했습니다 — 에이전트 입력창에 붙여넣으세요.";
 }
+
+// ── 섹션들을 좌우 슬라이드 덱으로 변환 ──
+const secs = [...document.querySelectorAll("section")];
+const wrap = secs[0].parentElement;
+const deck = document.createElement("div");
+deck.className = "deck";
+const slidesEl = document.createElement("div");
+slidesEl.className = "slides";
+deck.appendChild(slidesEl);
+wrap.insertBefore(deck, secs[0]);
+secs.forEach(s => { s.classList.add("slide"); slidesEl.appendChild(s); });
+
+deck.insertAdjacentHTML("beforeend",
+  `<button class="navbtn prev" id="navPrev" onclick="go(-1)">‹</button>
+   <button class="navbtn next" id="navNext" onclick="go(1)">›</button>`);
+const dots = document.createElement("div");
+dots.className = "dots";
+dots.innerHTML = secs.map((_, i) =>
+  `<button class="dot" onclick="showSlide(${i})" aria-label="${i + 1}번 슬라이드"></button>`).join("")
+  + `<span class="pginfo" id="pgInfo"></span>`;
+deck.after(dots);
+dots.insertAdjacentHTML("afterend",
+  `<p class="swipehint">◀ ▶ 버튼 · 키보드 ←/→ · 스와이프로 넘길 수 있습니다</p>`);
+
+let cur = 0;
+function showSlide(i) {
+  cur = Math.max(0, Math.min(secs.length - 1, i));
+  slidesEl.style.transform = `translateX(-${cur * 100}%)`;
+  document.querySelectorAll(".dot").forEach((d, j) => d.classList.toggle("on", j === cur));
+  document.getElementById("pgInfo").textContent = `${cur + 1} / ${secs.length}`;
+  document.getElementById("navPrev").disabled = cur === 0;
+  document.getElementById("navNext").disabled = cur === secs.length - 1;
+  secs[cur].scrollTop = 0;
+}
+function go(d) { showSlide(cur + d); }
+
+function fitDeck() {
+  const top = deck.getBoundingClientRect().top;
+  const h = Math.max(400, window.innerHeight - top - 96);
+  document.documentElement.style.setProperty("--slideH", h + "px");
+}
+window.addEventListener("resize", fitDeck);
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+  if (e.key === "ArrowRight") go(1);
+  if (e.key === "ArrowLeft") go(-1);
+});
+let touchX = 0;
+slidesEl.addEventListener("touchstart", e => { touchX = e.touches[0].clientX; }, { passive: true });
+slidesEl.addEventListener("touchend", e => {
+  const dx = e.changedTouches[0].clientX - touchX;
+  if (Math.abs(dx) > 60) go(dx < 0 ? 1 : -1);
+}, { passive: true });
+
+fitDeck();
+showSlide(0);
 </script>
 </body>
 </html>
