@@ -648,7 +648,7 @@ async function refresh() {
   currentFiles = s.files;
   dbSources = s.db_sources || [];
   document.getElementById("fileList").innerHTML =
-    s.files.map(f => `<span class="chip">📄 ${f}</span>`).join("");
+    s.files.map(f => `<span class="chip">📄 ${f}<b class="x" onclick="deleteFile('${f}')" title="삭제">×</b></span>`).join("");
   renderSampleList();
   renderDocSelect();
   toggle("nFiles", s.files.length > 0);
@@ -665,8 +665,10 @@ async function refresh() {
     setSlider("overlapSlider", "overlapVal", s.db_chunk_overlap ?? s.cfg_chunk_overlap);
     sliderInit = true;
   }
-  // 문서는 있는데 DB가 없으면 → [DB 만들기]로 시선 끌기
-  setAttention(s.files.length > 0 && !s.db_exists);
+  // 문서와 벡터디비가 어긋나 있으면(DB 없음·추가·삭제 후) → [DB 만들기]로 시선 끌기
+  const mismatch = s.db_exists &&
+    JSON.stringify([...s.files].sort()) !== JSON.stringify([...dbSources].sort());
+  setAttention(s.files.length > 0 && (!s.db_exists || mismatch));
   return s;
 }
 function toggle(id, on) { document.getElementById(id).classList.toggle("on", on); }
@@ -738,6 +740,15 @@ function renderSampleList() {
     return `<span class="chip click${added ? " on" : ""}" onclick="addSample('${n}')">` +
       `${FMT_ICON[ext] || "📄"} ${n.slice(0, dot)} <small>${ext}</small></span>`;
   }).join("") + `<span class="chip click" onclick="addSample()">＋ 전체 추가</span>`;
+}
+
+async function deleteFile(name) {
+  try {
+    await api("/api/file?name=" + encodeURIComponent(name), { method: "DELETE" });
+    show("uploadMsg", `'${name}' 삭제됨 — 벡터디비에 반영하려면 [⚡ DB 만들기]를 다시 눌러 주세요.`, "ok");
+    if (typeof viewerFile !== "undefined" && viewerFile === name) closeViewer();
+    refresh();
+  } catch (e) { show("uploadMsg", e.message, "error"); }
 }
 
 async function addSample(name) {

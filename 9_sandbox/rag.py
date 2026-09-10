@@ -117,6 +117,16 @@ def get_chunks():
             "chunks": [{"source": c["source"], "text": c["text"]} for c in db["chunks"]]}
 
 
+def delete_file(name):
+    """data 폴더에서 문서를 삭제합니다 (벡터디비 반영은 [DB 만들기]를 다시)"""
+    name = os.path.basename(name)
+    path = os.path.join(DATA_DIR, name)
+    if not name.endswith((".md", ".txt")) or not os.path.exists(path):
+        raise RuntimeError(f"'{name}' 문서를 찾을 수 없습니다.")
+    os.remove(path)
+    return name
+
+
 def read_file(name):
     """data 폴더 문서의 원문 반환 (경로 탈출 방지를 위해 파일명만 허용)"""
     name = os.path.basename(name)

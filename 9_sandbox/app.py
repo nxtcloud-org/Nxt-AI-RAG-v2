@@ -6,6 +6,7 @@
   GET  /api/status  → 지금 상태(문서 개수, 청크 개수, 사용 중인 AI)
   GET  /api/chunks  → 벡터디비에 저장된 청크 목록 (어떻게 쪼개졌는지 구경)
   GET  /api/file    → data 폴더 문서의 원문 (?name=파일명)
+  DELETE /api/file  → data 폴더 문서 삭제 (?name=파일명)
   POST /api/ask     → 질문(+이전 대화) → 벡터 검색 → AI 답변
   POST /api/upload  → 문서 파일을 data 폴더에 저장
   POST /api/sample  → 샘플 문서를 data 폴더로 복사
@@ -74,6 +75,18 @@ class Handler(BaseHTTPRequestHandler):
             elif url.path == "/api/file":
                 name = parse_qs(url.query).get("name", [""])[0]
                 self._json(rag.read_file(name))
+            else:
+                self._json({"error": "없는 주소입니다"}, code=404)
+        except Exception as e:
+            self._json({"error": str(e)}, code=400)
+
+    # ── 문서 삭제 ──
+    def do_DELETE(self):
+        url = urlparse(self.path)
+        try:
+            if url.path == "/api/file":
+                name = parse_qs(url.query).get("name", [""])[0]
+                self._json({"deleted": rag.delete_file(name)})
             else:
                 self._json({"error": "없는 주소입니다"}, code=404)
         except Exception as e:
