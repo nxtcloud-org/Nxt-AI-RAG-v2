@@ -151,6 +151,7 @@
   .howto { margin-top: 16px; }
   .howto li { margin: 6px 0 6px 22px; font-size: 14.5px; }
   .cta { display: flex; gap: 10px; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
+  .talk-label { font-size: 12.5px; font-weight: 800; color: var(--accent); margin-top: 12px; }
   .maptable { width: 100%; border-collapse: collapse; font-size: 13px; }
   .maptable th, .maptable td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #ECF1F5; line-height: 1.55; }
   .maptable th { color: var(--muted); font-size: 12px; }
@@ -355,6 +356,29 @@
       <div class="cta">
         <button onclick="goLab()">⚡ 실습 시작하기</button>
         <a class="linkbtn" href="/guide">📖 더 자세한 설명서</a>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>🎓 에이전트와 대화하며 배우세요</h2>
+      <p style="font-size:13.5px;color:var(--muted);line-height:1.7;margin-bottom:12px">
+        이 폴더를 Codex·Claude 같은 에이전트에 연결하고, 궁금한 것을 그냥 물어보세요.
+        묻고 → 바꾸고 → 키우는 대화가 그대로 공부가 됩니다.</p>
+      <p class="talk-label">🧭 구조를 물어보세요</p>
+      <div class="examples" style="margin-top:6px">
+        <span class="exq">💬 질문하면 내부에서 무슨 일이 일어나는지 순서대로 설명해줘</span>
+        <span class="exq">💬 vector_db.json을 열어서 벡터가 뭔지 보여줘</span>
+        <span class="exq">💬 app.py와 rag.py는 서로 뭘 주고받아?</span>
+      </div>
+      <p class="talk-label">🔧 바꿔보세요</p>
+      <div class="examples" style="margin-top:6px">
+        <span class="exq">💬 제목과 색을 우리 팀 느낌으로 바꿔줘</span>
+        <span class="exq">💬 AI가 공문 말투로 답하게 해줘</span>
+        <span class="exq">💬 벡터디비를 Chroma로 바꿔줘</span>
+      </div>
+      <p class="talk-label">🌱 내 서비스로 키워보세요</p>
+      <div class="examples" style="margin-top:6px">
+        <span class="exq">💬 우리 부서 규정 검색 서비스로 만들려면 뭐부터 해야 해?</span>
+        <span class="exq">💬 동료들도 쓰게 하려면 어디에 올려야 해?</span>
       </div>
     </div>
     <div class="card" style="margin-top:16px">
