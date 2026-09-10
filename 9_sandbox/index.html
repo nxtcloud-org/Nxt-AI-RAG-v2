@@ -268,10 +268,32 @@
   .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--grad-a), var(--grad-b)); }
 
   /* ── 데이터 탭 ── */
+  .viewerbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 12px; font-size: 13.5px;
+  }
+  .viewerbar button { padding: 6px 12px; font-size: 12px; }
   .viewer {
     background: #F7FAFC; border: 1px solid #E3EAEF; border-radius: 12px;
-    padding: 14px 16px; margin-top: 12px; max-height: 380px; overflow-y: auto;
-    font-size: 13px; line-height: 1.7; white-space: pre-wrap; color: var(--ink);
+    padding: 14px 16px; margin-top: 8px; max-height: 420px; overflow-y: auto;
+    font-size: 13px; line-height: 1.7; color: var(--ink);
+  }
+  .viewer.raw { white-space: pre-wrap; font-family: "SF Mono", Consolas, monospace; font-size: 12px; }
+  .viewer h3 { font-size: 15px; margin: 12px 0 4px; color: var(--accent); }
+  .viewer h4 { font-size: 13.5px; margin: 10px 0 3px; }
+  .viewer p { margin: 5px 0; }
+  .viewer ul { margin: 5px 0 5px 18px; }
+  .viewer hr { border: 0; border-top: 1px solid #E3EAEF; margin: 10px 0; }
+  /* 답변 말풍선과 문서 뷰어 공용: 표·코드 */
+  .body table, .viewer table {
+    border-collapse: collapse; margin: 8px 0; font-size: 12.5px; width: 100%;
+  }
+  .body th, .body td, .viewer th, .viewer td {
+    border: 1px solid #DCE5EC; padding: 6px 10px; text-align: left;
+  }
+  .body th, .viewer th { background: #EDF2F6; font-weight: 700; }
+  .body code, .viewer code {
+    background: #EDF2F6; border-radius: 5px; padding: 1px 6px; font-size: 12px;
   }
   .empty { color: var(--muted); font-size: 13.5px; padding: 12px 0; }
   .chunkmeta { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
@@ -492,6 +514,10 @@
     <div class="card" style="margin-top:20px">
       <h2>📁 원본 문서 <span style="color:var(--muted);font-weight:500;font-size:12.5px">칩을 누르면 내용이 열립니다</span></h2>
       <div class="chips" id="dataFiles"></div>
+      <div class="viewerbar hidden" id="viewerBar">
+        <b id="viewerName"></b>
+        <button class="ghost" id="rawToggle" onclick="toggleRaw()">원문 보기</button>
+      </div>
       <div class="viewer hidden" id="fileViewer"></div>
       <p class="empty hidden" id="noFiles">아직 문서가 없습니다. 실습 탭에서 문서를 넣어 주세요.</p>
     </div>
@@ -659,14 +685,32 @@ async function loadDataTab() {
     list.innerHTML = "";
   }
 }
+let viewerRaw = "", viewerShowRaw = false;
+
 async function viewFile(name) {
   try {
     const r = await api("/api/file?name=" + encodeURIComponent(name));
-    const v = document.getElementById("fileViewer");
-    v.textContent = r.text;
-    v.classList.remove("hidden");
+    viewerRaw = r.text;
+    viewerShowRaw = false;
+    document.getElementById("viewerName").textContent = "📄 " + name;
+    document.getElementById("viewerBar").classList.remove("hidden");
+    renderViewer();
   } catch (e) { alert(e.message); }
 }
+
+function renderViewer() {
+  const v = document.getElementById("fileViewer");
+  v.classList.remove("hidden");
+  if (viewerShowRaw) {
+    v.classList.add("raw");
+    v.textContent = viewerRaw;        // 청크는 이 원문 글자 그대로에서 잘립니다
+  } else {
+    v.classList.remove("raw");
+    v.innerHTML = md(viewerRaw);      // 보기 좋게 렌더링
+  }
+  document.getElementById("rawToggle").textContent = viewerShowRaw ? "렌더링 보기" : "원문 보기";
+}
+function toggleRaw() { viewerShowRaw = !viewerShowRaw; renderViewer(); }
 
 // ── 질문 → 채팅형 답변 (맥락 기억) ──
 let chatHistory = [];   // [{q, a}] — 최근 대화를 함께 보내 맥락을 잇습니다
@@ -681,15 +725,27 @@ function clearChat() {
   document.getElementById("threadHead").classList.add("hidden");
 }
 
-// 아주 작은 마크다운 표시기 (굵게·제목·목록만)
+// 아주 작은 마크다운 표시기 (제목·굵게·목록·표·코드)
 function md(text) {
   let h = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  // | 로 만든 표 → <table>
+  h = h.replace(/(?:^\|.*\|[ \t]*$\n?){2,}/gm, block => {
+    const rows = block.trim().split("\n")
+      .map(r => r.replace(/^\s*\||\|\s*$/g, "").split("|").map(c => c.trim()));
+    const hasSep = rows[1] && rows[1].every(c => /^:?-{2,}:?$/.test(c));
+    const body = hasSep ? rows.slice(2) : rows.slice(1);
+    return "<table><tr>" + rows[0].map(c => `<th>${c}</th>`).join("") + "</tr>" +
+      body.map(r => "<tr>" + r.map(c => `<td>${c}</td>`).join("") + "</tr>").join("") + "</table>\n";
+  });
   h = h.replace(/^#{1,2} (.*)$/gm, "<h3>$1</h3>")
        .replace(/^#{3,} (.*)$/gm, "<h4>$1</h4>")
        .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+       .replace(/`([^`]+)`/g, "<code>$1</code>")
+       .replace(/^---+$/gm, "<hr>")
        .replace(/^[-•*] (.*)$/gm, "<li>$1</li>")
        .replace(/(?:<li>.*<\/li>\n?)+/g, m => "<ul>" + m + "</ul>");
-  return h.split(/\n{2,}/).map(p => /^<(h3|h4|ul)/.test(p) ? p : "<p>" + p.replace(/\n/g, "<br>") + "</p>").join("");
+  return h.split(/\n{2,}/).map(p =>
+    /^<(h3|h4|ul|table|hr)/.test(p.trim()) ? p : "<p>" + p.replace(/\n/g, "<br>") + "</p>").join("");
 }
 
 async function ask() {
