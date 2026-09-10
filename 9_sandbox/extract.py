@@ -13,13 +13,14 @@ import re
 import zipfile
 
 # 업로드를 받는 형식 (이 목록에 없으면 안내 메시지와 함께 거절)
-SUPPORTED = (".md", ".txt", ".csv", ".hwpx", ".pptx", ".docx")
+SUPPORTED = (".md", ".txt", ".csv", ".xlsx", ".hwpx", ".pptx", ".docx")
 
 # 읽을 수 없는 형식 → 어떻게 하면 되는지 알려주는 안내
 GUIDE = {
     ".hwp": "구버전 hwp는 읽을 수 없어요. 한글에서 [다른 이름으로 저장 → hwpx]로 저장해 올려 주세요.",
     ".ppt": "구버전 ppt는 읽을 수 없어요. 파워포인트에서 pptx로 다시 저장해 올려 주세요.",
     ".doc": "구버전 doc는 읽을 수 없어요. 워드에서 docx로 다시 저장해 올려 주세요.",
+    ".xls": "구버전 xls는 읽을 수 없어요. 엑셀에서 xlsx로 다시 저장해 올려 주세요.",
     ".pdf": "PDF는 읽을 수 없어요. 내용을 복사해 메모장(.txt)에 붙여넣거나, 에이전트에게 변환을 부탁해 보세요.",
 }
 
@@ -87,6 +88,61 @@ def _from_pptx(data):
     return "\n\n".join(parts)
 
 
+def _col_index(ref):
+    """셀 주소('B3')에서 열 번호를 구합니다 (A=1, B=2 …)"""
+    col = 0
+    for ch in ref:
+        if ch.isalpha():
+            col = col * 26 + (ord(ch.upper()) - 64)
+        else:
+            break
+    return col
+
+
+def _from_xlsx(data):
+    """엑셀도 ZIP 속 XML — 문자열 사전(sharedStrings)과 시트 셀을 읽어
+    CSV처럼 각 행을 '컬럼명: 값' 문장으로 폅니다."""
+    with zipfile.ZipFile(io.BytesIO(data)) as z:
+        names = z.namelist()
+        shared = []
+        if "xl/sharedStrings.xml" in names:
+            sx = z.read("xl/sharedStrings.xml").decode("utf-8", "ignore")
+            shared = [html.unescape("".join(re.findall(r"<t[^>]*>([^<]*)</t>", si)))
+                      for si in re.findall(r"<si>([\s\S]*?)</si>", sx)]
+        lines = []
+        for sn in sorted(n for n in names if re.fullmatch(r"xl/worksheets/sheet\d+\.xml", n)):
+            xml = z.read(sn).decode("utf-8", "ignore")
+            header = None
+            for rowxml in re.findall(r"<row[^>]*>([\s\S]*?)</row>", xml):
+                byc = {}
+                for attrs, inner in re.findall(r"<c([^>]*?)(?:/>|>([\s\S]*?)</c>)", rowxml):
+                    ref = re.search(r'r="([A-Z]+\d+)"', attrs)
+                    col = _col_index(ref.group(1)) if ref else len(byc) + 1
+                    v = re.search(r"<v>([^<]*)</v>", inner or "")
+                    t = re.search(r"<t[^>]*>([^<]*)</t>", inner or "")
+                    if 't="s"' in attrs and v:
+                        idx = int(v.group(1))
+                        byc[col] = shared[idx] if idx < len(shared) else ""
+                    elif t:
+                        byc[col] = html.unescape(t.group(1))
+                    elif v:
+                        byc[col] = v.group(1)
+                if not byc:
+                    continue
+                width = max(byc)
+                cells = [str(byc.get(i, "")).strip() for i in range(1, width + 1)]
+                if not any(cells):
+                    continue
+                if header is None:
+                    header = cells
+                    lines.append(" | ".join(header))
+                else:
+                    pairs = [f"{h}: {c}" for h, c in zip(header, cells) if c]
+                    if pairs:
+                        lines.append(", ".join(pairs))
+    return "\n\n".join(lines)
+
+
 def _from_docx(data):
     with zipfile.ZipFile(io.BytesIO(data)) as z:
         xml = z.read("word/document.xml").decode("utf-8", "ignore")
@@ -107,6 +163,8 @@ def extract(name, data):
             text = _decode(data)
         elif ext == ".csv":
             text = _from_csv(data)
+        elif ext == ".xlsx":
+            text = _from_xlsx(data)
         elif ext == ".hwpx":
             text = _from_hwpx(data)
         elif ext == ".pptx":

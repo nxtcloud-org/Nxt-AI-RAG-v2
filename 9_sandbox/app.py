@@ -65,6 +65,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(rag.get_chunks())
             elif url.path == "/api/guardrail":
                 self._json(guardrail.get_settings())
+            elif url.path == "/api/samples":
+                self._json({"samples": rag.list_samples()})
             elif url.path == "/api/file":
                 name = parse_qs(url.query).get("name", [""])[0]
                 self._json(rag.read_file(name))
@@ -107,7 +109,8 @@ class Handler(BaseHTTPRequestHandler):
             elif self.path == "/api/upload":
                 self._json({"saved": self._save_upload(body)})
             elif self.path == "/api/sample":
-                self._json({"saved": rag.load_samples()})
+                opts = json.loads(body) if body else {}
+                self._json({"saved": rag.load_samples(opts.get("name"))})
             elif self.path == "/api/rebuild":
                 opts = json.loads(body) if body else {}
                 rag.reset_db()

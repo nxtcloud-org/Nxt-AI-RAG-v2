@@ -200,6 +200,7 @@
   .chip.click { cursor: pointer; background: #fff; border: 1px solid #DCE5EC; }
   .chip.click:hover { border-color: var(--accent); color: var(--accent); }
   .chip.click.on { border-color: var(--accent); color: var(--accent); background: #F0F9FA; font-weight: 700; }
+  .chip small { opacity: .6; font-size: 10.5px; margin-left: 2px; }
 
   /* ── 슬라이더 ── */
   .slider-row { margin-top: 12px; }
@@ -413,7 +414,7 @@
     <div class="card" style="margin-top:16px">
       <h2>사용 순서는 세 번의 클릭</h2>
       <ol class="howto">
-        <li><b>문서 넣기</b> — 파일을 끌어다 놓거나, 샘플 버튼 하나로 시작</li>
+        <li><b>문서 넣기</b> — 파일을 끌어다 놓거나, 샘플 목록에서 내 부서와 가까운 문서를 골라 추가</li>
         <li><b>DB 만들기</b> — 쪽지로 자르고 서랍에 정리 (크기를 슬라이더로 실험!)</li>
         <li><b>질문하기</b> — 💬 챗봇 탭에서 대화해요. 이어서 물어봐도 맥락을 기억하고,
           🛡️ 가드레일 탭에서 금지어·개인정보 가리기를 직접 조절할 수 있어요</li>
@@ -492,12 +493,11 @@
         <h2><span class="stepnum">1</span> 문서 넣기 <span style="color:var(--muted);font-weight:500;font-size:12.5px">→ data/</span></h2>
         <div class="dropzone" id="dropzone">
           <b>파일을 끌어다 놓으세요</b>
-          .md · .txt · .csv · 한글(hwpx) · 파워포인트(pptx) · 워드(docx)
-          <input type="file" id="fileInput" accept=".md,.txt,.csv,.hwpx,.pptx,.docx" multiple class="hidden">
+          md · txt · csv · 엑셀(xlsx) · 한글(hwpx) · 파워포인트(pptx) · 워드(docx)
+          <input type="file" id="fileInput" accept=".md,.txt,.csv,.xlsx,.hwpx,.pptx,.docx" multiple class="hidden">
         </div>
-        <button class="ghost" style="width:100%;margin-top:10px" onclick="loadSample()">
-          🧪 샘플 문서로 바로 해보기 (대학 행정 편람)
-        </button>
+        <p class="talk-label" style="margin-top:12px">🧪 샘플 문서 — 내 프로젝트와 가까운 것을 골라 추가하세요</p>
+        <div class="chips" id="sampleList" style="margin-top:8px"></div>
         <div class="chips" id="fileList"></div>
         <p class="msg" id="uploadMsg"></p>
       </div>
@@ -649,8 +649,10 @@ async function refresh() {
     badge.textContent = isGemini ? "🌐 Gemini · 로컬 모드" : "☁️ AWS Bedrock · EC2 모드";
     document.getElementById("aiName").textContent = isGemini ? "Gemini" : "Bedrock";
   }
+  currentFiles = s.files;
   document.getElementById("fileList").innerHTML =
     s.files.map(f => `<span class="chip">📄 ${f}</span>`).join("");
+  renderSampleList();
   toggle("nFiles", s.files.length > 0);
   toggle("nChunks", s.chunks > 0);
   toggle("nDb", s.db_exists);
@@ -714,10 +716,40 @@ async function upload(files) {
   } catch (e) { show("uploadMsg", e.message, "error"); }
 }
 
-async function loadSample() {
+// ── 샘플 문서 선택 목록 ──
+const FMT_ICON = { md: "📝", txt: "📄", csv: "📈", xlsx: "📊", docx: "📘", hwpx: "📕", pptx: "📙" };
+let sampleNames = [], currentFiles = [];
+
+async function loadSampleList() {
+  sampleNames = (await api("/api/samples")).samples;
+  renderSampleList();
+}
+
+function sampleOutName(n) {   // 샘플이 data 폴더에 저장될 때의 파일명 (변환되면 .md)
+  const ext = n.slice(n.lastIndexOf(".") + 1).toLowerCase();
+  return (ext === "md" || ext === "txt") ? n : n.slice(0, n.lastIndexOf(".")) + ".md";
+}
+
+function renderSampleList() {
+  const box = document.getElementById("sampleList");
+  if (!sampleNames.length) { box.innerHTML = ""; return; }
+  box.innerHTML = sampleNames.map(n => {
+    const dot = n.lastIndexOf(".");
+    const ext = n.slice(dot + 1).toLowerCase();
+    const added = currentFiles.includes(sampleOutName(n));
+    return `<span class="chip click${added ? " on" : ""}" onclick="addSample('${n}')">` +
+      `${FMT_ICON[ext] || "📄"} ${n.slice(0, dot)} <small>${ext}</small></span>`;
+  }).join("") + `<span class="chip click" onclick="addSample()">＋ 전체 추가</span>`;
+}
+
+async function addSample(name) {
   try {
-    const r = await api("/api/sample", { method: "POST" });
-    show("uploadMsg", `샘플 문서를 넣었어요: ${r.saved.join(", ")} — 👉 이제 [⚡ DB 만들기]를 눌러 주세요!`, "ok");
+    const r = await api("/api/sample", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(name ? { name } : {}),
+    });
+    show("uploadMsg", `추가 완료: ${r.saved.join(", ")} — 👉 이제 [⚡ DB 만들기]를 눌러 주세요!`, "ok");
     refresh();
   } catch (e) { show("uploadMsg", e.message, "error"); }
 }
@@ -1046,6 +1078,7 @@ async function resetGuard() {
 }
 
 refresh();
+loadSampleList();
 </script>
 </body>
 </html>

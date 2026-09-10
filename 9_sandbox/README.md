@@ -59,6 +59,8 @@ python3 app.py
 
 - 로컬(Gemini)과 EC2(Bedrock)는 임베딩이 달라 **vector_db.json을 서로 넘겨 쓸 수 없습니다.**
   환경을 옮기면 [DB 초기화] → [DB 만들기]를 다시 하세요.
-- 업로드 가능: md·txt·csv·hwpx·pptx·docx (한글·PPT·워드·CSV는 자동으로 텍스트 변환 저장).
-  구버전 hwp·ppt·doc는 새 형식으로 다시 저장 필요, PDF는 텍스트로 변환해서 넣어 주세요.
+- 업로드 가능: md·txt·csv·xlsx·hwpx·pptx·docx (한글·엑셀·PPT·워드·CSV는 자동으로 텍스트 변환 저장).
+  구버전 hwp·xls·ppt·doc는 새 형식으로 다시 저장 필요, PDF는 텍스트로 변환해서 넣어 주세요.
+- 샘플 문서 7종: 행정 편람(md), 예산집행 현황(xlsx), 강의실 예약(csv), 장학금 FAQ(docx),
+  시설 안전점검 지침(hwpx), 외국인 유학생 안내(pptx), 보도자료(txt) — 화면에서 골라 추가
 - `.env`의 API 키는 비밀번호입니다. 공유·업로드 금지.

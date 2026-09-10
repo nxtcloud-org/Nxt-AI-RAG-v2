@@ -12,6 +12,7 @@ import math
 import os
 
 import config
+import extract
 import guardrail
 import llm
 
@@ -27,17 +28,37 @@ def list_files():
     return sorted(f for f in os.listdir(DATA_DIR) if f.endswith((".md", ".txt")))
 
 
-def load_samples():
-    """samples 폴더의 예시 문서를 data 폴더로 복사 — 바로 테스트해볼 수 있게"""
-    names = sorted(f for f in os.listdir(SAMPLE_DIR) if f.endswith((".md", ".txt")))
+def list_samples():
+    """samples 폴더의 예시 문서 목록 (여러 형식 — 부서 유형별 샘플)"""
+    if not os.path.isdir(SAMPLE_DIR):
+        return []
+    return sorted(f for f in os.listdir(SAMPLE_DIR)
+                  if not f.startswith(".") and "." in f)
+
+
+def load_samples(name=None):
+    """예시 문서를 data 폴더에 추가합니다.
+
+    name을 주면 그 파일 하나만, 없으면 전부.
+    xlsx·hwpx 등은 업로드와 똑같이 extract를 거쳐 텍스트(.md)로 변환해 저장합니다.
+    """
+    names = [os.path.basename(name)] if name else list_samples()
     if not names:
         raise RuntimeError("samples 폴더에 예시 문서가 없습니다.")
     os.makedirs(DATA_DIR, exist_ok=True)
-    for name in names:
-        with open(os.path.join(SAMPLE_DIR, name), "rb") as src:
-            with open(os.path.join(DATA_DIR, name), "wb") as dst:
-                dst.write(src.read())
-    return names
+    saved = []
+    for n in names:
+        path = os.path.join(SAMPLE_DIR, n)
+        if not os.path.exists(path):
+            raise RuntimeError(f"'{n}' 예시 문서를 찾을 수 없습니다.")
+        with open(path, "rb") as f:
+            data = f.read()
+        text = extract.extract(n, data)
+        out = n if n.lower().endswith((".md", ".txt")) else n[: n.rfind(".")] + ".md"
+        with open(os.path.join(DATA_DIR, out), "w", encoding="utf-8") as f:
+            f.write(text)
+        saved.append(out)
+    return saved
 
 
 def split_text(text, size=None, overlap=None):
