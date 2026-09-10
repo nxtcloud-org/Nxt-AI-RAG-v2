@@ -12,6 +12,7 @@ import math
 import os
 
 import config
+import guardrail
 import llm
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -117,8 +118,8 @@ def db_info():
             "db_exists": os.path.exists(DB_PATH), "chunks": 0, "db_backend": None,
             "cfg_chunk_size": config.CHUNK_SIZE, "cfg_chunk_overlap": config.CHUNK_OVERLAP,
             "db_chunk_size": None, "db_chunk_overlap": None,
-            "guard_keywords": len([w for w in config.BLOCKED_KEYWORDS if w]),
-            "guard_patterns": len(config.MASK_PATTERNS)}
+            "guard_keywords": len([w for w in guardrail.get_settings()["blocked_keywords"] if w]),
+            "guard_patterns": len(guardrail.get_settings()["mask_patterns"])}
     if info["db_exists"]:
         with open(DB_PATH, encoding="utf-8") as f:
             db = json.load(f)

@@ -1,5 +1,6 @@
 .env
 vector_db.json
+guardrail.json
 __pycache__/
 data/*
 !data/.gitkeep

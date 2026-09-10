@@ -63,6 +63,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(rag.db_info())
             elif url.path == "/api/chunks":
                 self._json(rag.get_chunks())
+            elif url.path == "/api/guardrail":
+                self._json(guardrail.get_settings())
             elif url.path == "/api/file":
                 name = parse_qs(url.query).get("name", [""])[0]
                 self._json(rag.read_file(name))
@@ -84,7 +86,7 @@ class Handler(BaseHTTPRequestHandler):
                 # 🛡️ 가드레일 1단계: 금지 키워드면 AI를 부르지 않고 거부
                 hit = guardrail.check_input(question)
                 if hit:
-                    self._json({"answer": config.BLOCK_MESSAGE, "chunks": [],
+                    self._json({"answer": guardrail.block_message(), "chunks": [],
                                 "blocked": hit, "masked": 0})
                     return
                 # 이전 대화(최근 4턴)를 프롬프트에 넣어 맥락을 기억하게 합니다
@@ -113,6 +115,13 @@ class Handler(BaseHTTPRequestHandler):
             elif self.path == "/api/reset":
                 rag.reset_db()
                 self._json({"ok": True})
+            elif self.path == "/api/guardrail":
+                opts = json.loads(body) if body else {}
+                if opts.get("reset"):
+                    guardrail.reset_settings()
+                    self._json(guardrail.get_settings())
+                else:
+                    self._json(guardrail.save_settings(opts))
             else:
                 self._json({"error": "없는 주소입니다"}, code=404)
         except Exception as e:  # 오류는 화면에 그대로 보여줍니다

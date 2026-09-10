@@ -218,9 +218,17 @@
   }
   .exq:hover { border-color: var(--accent); color: var(--accent); background: #F0F9FA; }
 
-  /* ── 대화 ── */
-  .thread-head { display: flex; justify-content: flex-end; margin-top: 16px; }
-  .thread { margin-top: 8px; display: flex; flex-direction: column; gap: 14px; }
+  /* ── 대화창 (스크롤되는 채팅 화면) ── */
+  .chatwin {
+    display: flex; flex-direction: column; gap: 14px;
+    height: 440px; overflow-y: auto;
+    background: #FAFCFE; border: 1px solid #E3EAEF; border-radius: 14px;
+    padding: 16px; margin-bottom: 12px;
+  }
+  .chatwin:empty::before {
+    content: "벡터디비를 만든 뒤, 문서에 대해 무엇이든 물어보세요 🙌";
+    margin: auto; color: var(--muted); font-size: 14px;
+  }
   .bubble-q {
     align-self: flex-end; max-width: 80%;
     background: linear-gradient(135deg, var(--grad-a), var(--grad-b)); color: #fff;
@@ -300,6 +308,22 @@
   .chunkmeta b { color: var(--accent); }
   #chunkList { max-height: 520px; overflow-y: auto; margin-top: 8px; }
 
+  /* ── 페이지네이션 ── */
+  .pager { display: flex; align-items: center; gap: 12px; margin: 10px 0 4px; font-size: 13px; color: var(--muted); }
+  .pager button { padding: 6px 12px; font-size: 12px; }
+  .pager button:disabled { opacity: .4; cursor: default; }
+
+  /* ── 가드레일 탭 ── */
+  .guarddesc { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 10px; }
+  .chip .x { cursor: pointer; margin-left: 5px; color: #D14343; font-weight: 800; }
+  .patrow {
+    display: flex; align-items: center; gap: 10px; background: #F7FAFC;
+    border: 1px solid #E3EAEF; border-radius: 8px; padding: 8px 12px;
+    margin-top: 6px; font-size: 12.5px;
+  }
+  .patrow code { flex: 1; background: none; padding: 0; }
+  .patrow .x { cursor: pointer; color: #D14343; font-weight: 800; font-size: 14px; }
+
   .msg { font-size: 13.5px; margin-top: 10px; color: var(--muted); }
   .msg.ok { color: var(--accent); font-weight: 700; }
   .msg.error { color: #D14343; font-weight: 600; }
@@ -355,7 +379,9 @@
   <div class="tabs">
     <button class="tab active" data-page="home" onclick="switchTab(this)">🏠 홈</button>
     <button class="tab" data-page="lab" onclick="switchTab(this)">⚡ 실습</button>
-    <button class="tab" data-page="data" onclick="switchTab(this)">🔍 데이터 보기</button>
+    <button class="tab" data-page="chat" onclick="switchTab(this)">💬 챗봇</button>
+    <button class="tab" data-page="data" onclick="switchTab(this)">🔍 데이터</button>
+    <button class="tab" data-page="guard" onclick="switchTab(this)">🛡️ 가드레일</button>
   </div>
 
   <!-- ═══════════ 홈 탭 ═══════════ -->
@@ -382,7 +408,8 @@
       <ol class="howto">
         <li><b>문서 넣기</b> — 파일을 끌어다 놓거나, 샘플 버튼 하나로 시작</li>
         <li><b>DB 만들기</b> — 쪽지로 자르고 서랍에 정리 (크기를 슬라이더로 실험!)</li>
-        <li><b>질문하기</b> — AI가 근거 쪽지와 함께 답해요. 이어서 물어봐도 맥락을 기억합니다</li>
+        <li><b>질문하기</b> — 💬 챗봇 탭에서 대화해요. 이어서 물어봐도 맥락을 기억하고,
+          🛡️ 가드레일 탭에서 금지어·개인정보 가리기를 직접 조절할 수 있어요</li>
       </ol>
       <div class="cta">
         <button onclick="goLab()">⚡ 실습 시작하기</button>
@@ -484,29 +511,30 @@
       </div>
     </div>
 
-    <!-- 3단계 -->
-    <div class="card askcard">
-      <h2><span class="stepnum">3</span> 질문하기
+  </div>
+
+  <!-- ═══════════ 챗봇 탭 ═══════════ -->
+  <div class="page" id="page-chat">
+    <div class="card" style="margin-top:20px">
+      <h2>💬 문서 챗봇
         <span style="color:var(--muted);font-weight:500;font-size:12.5px">이어서 질문하면 맥락을 기억해요</span>
-        <span class="guardbadge" id="guardBadge" title="config.py의 BLOCKED_KEYWORDS·MASK_PATTERNS에서 조절">🛡️ 가드레일</span></h2>
-      <div class="askrow">
-        <input type="text" id="question" placeholder="문서 내용에 대해 무엇이든 물어보세요"
-               onkeydown="if(event.key==='Enter')ask()">
-        <button id="askBtn" onclick="ask()">검색 + 답변</button>
-      </div>
+        <span class="guardbadge" id="guardBadge" title="🛡️ 가드레일 탭에서 조절할 수 있어요">🛡️ 가드레일</span>
+        <button class="ghost hidden" id="clearBtn" style="padding:6px 12px;font-size:12px" onclick="clearChat()">🧹 새 대화</button>
+      </h2>
+      <div class="chatwin" id="thread"></div>
       <div class="examples">
         <span class="exq" onclick="fillAsk(this)">경조사 휴가는 며칠인가요?</span>
         <span class="exq" onclick="fillAsk(this)">재직 3년이면 연가가 며칠인가요?</span>
         <span class="exq" onclick="fillAsk(this)">출퇴근 기록 소급 등록은 언제까지 가능한가요?</span>
         <span class="exq" onclick="fillAsk(this)">직원 연봉이 얼마인가요? 🛡️</span>
       </div>
+      <div class="askrow" style="margin-top:10px">
+        <input type="text" id="question" placeholder="문서 내용에 대해 무엇이든 물어보세요"
+               onkeydown="if(event.key==='Enter')ask()">
+        <button id="askBtn" onclick="ask()">보내기</button>
+      </div>
       <p class="msg" id="askMsg"></p>
     </div>
-
-    <div class="thread-head hidden" id="threadHead">
-      <button class="ghost" style="padding:7px 14px;font-size:12.5px" onclick="clearChat()">🧹 대화 지우기 (맥락 초기화)</button>
-    </div>
-    <div class="thread" id="thread"></div>
   </div>
 
   <!-- ═══════════ 데이터 탭 ═══════════ -->
@@ -524,8 +552,54 @@
     <div class="card" style="margin-top:16px">
       <h2>✂️ 청크 분할 결과 <span style="color:var(--muted);font-weight:500;font-size:12.5px">문서가 실제로 어떻게 쪼개져 저장됐는지</span></h2>
       <p class="chunkmeta hidden" id="chunkMeta"></p>
+      <div class="pager hidden" id="chunkPager">
+        <button class="ghost" id="pgPrev" onclick="chunkPageMove(-1)">◀ 이전</button>
+        <span id="pgInfo"></span>
+        <button class="ghost" id="pgNext" onclick="chunkPageMove(1)">다음 ▶</button>
+      </div>
       <div id="chunkList"></div>
       <p class="empty hidden" id="noChunks">아직 벡터디비가 없습니다. 실습 탭에서 [DB 만들기]를 눌러 주세요.</p>
+    </div>
+  </div>
+
+  <!-- ═══════════ 가드레일 탭 ═══════════ -->
+  <div class="page" id="page-guard">
+    <div class="card" style="margin-top:20px">
+      <h2>🚫 금지어 — 질문(입력) 차단</h2>
+      <p class="guarddesc">질문에 아래 단어가 들어 있으면 AI를 부르지 않고 거부합니다.
+        글자 포함 검사라 "연봉이"처럼 조사가 붙어도 잡혀요.</p>
+      <div class="chips" id="kwList"></div>
+      <div class="askrow" style="margin-top:10px">
+        <input type="text" id="kwInput" placeholder="추가할 금지어 입력 후 Enter (예: 예산)"
+               onkeydown="if(event.key==='Enter')addKeyword()">
+        <button class="ghost" onclick="addKeyword()">추가</button>
+      </div>
+      <p class="guarddesc" style="margin-top:14px;margin-bottom:6px">거부할 때 보여줄 메시지</p>
+      <input type="text" id="blockMsgInput" style="width:100%">
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>🎭 개인정보 마스킹 — 답변(출력) 가리기</h2>
+      <p class="guarddesc">답변에서 아래 패턴(정규식)에 맞는 부분을 가립니다.
+        자주 쓰는 패턴은 버튼 한 번으로 추가하세요.</p>
+      <div class="chips">
+        <span class="chip click" onclick="addPreset('\\d{6}-\\d{7}')">+ 주민등록번호</span>
+        <span class="chip click" onclick="addPreset('01[016789]-?\\d{3,4}-?\\d{4}')">+ 휴대폰 번호</span>
+        <span class="chip click" onclick="addPreset('[\\w.-]+@[\\w.-]+\\.\\w+')">+ 이메일</span>
+        <span class="chip click" onclick="addPreset('\\d{2,6}-\\d{2,6}-\\d{2,8}')">+ 계좌번호</span>
+      </div>
+      <div id="patList" style="margin-top:10px"></div>
+      <div class="askrow" style="margin-top:10px">
+        <input type="text" id="patInput" placeholder="직접 정규식 추가 (모르겠으면 에이전트에게 부탁!)"
+               onkeydown="if(event.key==='Enter')addPattern()">
+        <button class="ghost" onclick="addPattern()">추가</button>
+      </div>
+      <p class="guarddesc" style="margin-top:14px;margin-bottom:6px">가릴 때 대신 표시할 글자</p>
+      <input type="text" id="maskTextInput" style="max-width:240px">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px;align-items:center;flex-wrap:wrap">
+      <button onclick="saveGuard()">💾 저장 — 챗봇에 바로 적용</button>
+      <button class="ghost" onclick="resetGuard()">기본값으로 되돌리기</button>
+      <p class="msg" id="guardMsg" style="margin:0"></p>
     </div>
   </div>
 
@@ -603,6 +677,7 @@ function switchTab(btn) {
   document.querySelectorAll(".page").forEach(p =>
     p.classList.toggle("active", p.id === "page-" + btn.dataset.page));
   if (btn.dataset.page === "data") loadDataTab();
+  if (btn.dataset.page === "guard") loadGuardTab();
 }
 function goLab() { switchTab(document.querySelector('[data-page="lab"]')); }
 
@@ -649,7 +724,7 @@ async function rebuild() {
       }),
     });
     const big = r.chunks > 200 ? " ⚠️ 청크가 많아 무료 임베딩 한도에 걸릴 수 있어요 — 문서를 줄이거나 청크 크기를 키워 보세요." : "";
-    show("dbMsg", `완료! 문서 ${r.files}개 → 청크 ${r.chunks}개를 저장했습니다. 🔍 데이터 탭에서 쪼개진 모습을 구경해 보세요.${big}`, "ok");
+    show("dbMsg", `완료! 문서 ${r.files}개 → 청크 ${r.chunks}개를 저장했습니다. 👉 💬 챗봇 탭에서 질문하고, 🔍 데이터 탭에서 쪼개진 모습을 확인해 보세요.${big}`, "ok");
     refresh();
   } catch (e) { show("dbMsg", e.message, "error"); }
   btn.disabled = false;
@@ -671,20 +746,38 @@ async function loadDataTab() {
 
   const c = await api("/api/chunks");
   const meta = document.getElementById("chunkMeta");
-  const list = document.getElementById("chunkList");
   document.getElementById("noChunks").classList.toggle("hidden", c.exists);
   meta.classList.toggle("hidden", !c.exists);
+  chunkItems = c.exists ? c.chunks : [];
+  chunkPage = 0;
   if (c.exists) {
     meta.innerHTML = `청크 크기 <b>${c.chunk_size}자</b> · 겹침 <b>${c.chunk_overlap}자</b> · 총 <b>${c.chunks.length}개</b> (${c.backend} 임베딩) — 한 상자가 검색의 최소 단위입니다`;
-    list.innerHTML = c.chunks.map((ch, i) => {
-      const d = document.createElement("div");
-      d.textContent = ch.text;
-      return `<div class="chunk"><div class="meta">청크 #${i + 1} · ${ch.source} · ${ch.text.length}자</div>${d.innerHTML}</div>`;
-    }).join("");
-  } else {
-    list.innerHTML = "";
   }
+  renderChunkPage();
 }
+
+// 청크 목록 10개씩 페이지네이션
+let chunkItems = [], chunkPage = 0;
+const CHUNKS_PER_PAGE = 10;
+
+function renderChunkPage() {
+  const list = document.getElementById("chunkList");
+  const total = chunkItems.length;
+  const pages = Math.max(1, Math.ceil(total / CHUNKS_PER_PAGE));
+  chunkPage = Math.min(Math.max(0, chunkPage), pages - 1);
+  const start = chunkPage * CHUNKS_PER_PAGE;
+  list.innerHTML = chunkItems.slice(start, start + CHUNKS_PER_PAGE).map((ch, i) => {
+    const d = document.createElement("div");
+    d.textContent = ch.text;
+    return `<div class="chunk"><div class="meta">청크 #${start + i + 1} · ${ch.source} · ${ch.text.length}자</div>${d.innerHTML}</div>`;
+  }).join("");
+  document.getElementById("chunkPager").classList.toggle("hidden", total === 0);
+  document.getElementById("pgInfo").textContent = `${chunkPage + 1} / ${pages} 페이지 · 총 ${total}개`;
+  document.getElementById("pgPrev").disabled = chunkPage === 0;
+  document.getElementById("pgNext").disabled = chunkPage >= pages - 1;
+  list.scrollTop = 0;
+}
+function chunkPageMove(delta) { chunkPage += delta; renderChunkPage(); }
 let viewerRaw = "", viewerShowRaw = false;
 
 async function viewFile(name) {
@@ -722,7 +815,7 @@ function fillAsk(el) {
 function clearChat() {
   chatHistory = [];
   document.getElementById("thread").innerHTML = "";
-  document.getElementById("threadHead").classList.add("hidden");
+  document.getElementById("clearBtn").classList.add("hidden");
 }
 
 // 아주 작은 마크다운 표시기 (제목·굵게·목록·표·코드)
@@ -762,7 +855,7 @@ async function ask() {
     `<div class="bubble-a"><div class="avatar">🤖</div>
        <div class="body"><span class="dots"><span></span><span></span><span></span></span></div></div>`);
   const body = thread.lastElementChild.querySelector(".body");
-  body.scrollIntoView({ behavior: "smooth", block: "end" });
+  thread.scrollTop = thread.scrollHeight;   // 대화창 안에서만 스크롤
 
   try {
     const r = await api("/api/ask", {
@@ -774,7 +867,7 @@ async function ask() {
       // 🛡️ 입력 가드레일에 걸린 경우 — AI를 부르지도 않았습니다
       body.innerHTML = md(r.answer) +
         `<div class="guardnote">🛡️ 금지어 "${r.blocked}"가 감지되어 AI를 호출하지 않았습니다.
-         금지어 목록은 <code>config.py</code>의 <code>BLOCKED_KEYWORDS</code>에서 조절할 수 있어요.</div>`;
+         금지어는 🛡️ 가드레일 탭에서 조절할 수 있어요.</div>`;
     } else {
       const chunksHtml = r.chunks.map((c, i) => {
         const d = document.createElement("div");
@@ -785,20 +878,88 @@ async function ask() {
             <span style="font-weight:600;color:var(--muted)">${c.score}</span></div>${d.innerHTML}</div>`;
       }).join("");
       const maskNote = r.masked > 0
-        ? `<div class="guardnote">🛡️ 답변 속 개인정보 ${r.masked}곳을 가렸습니다.
-           (<code>config.py</code>의 <code>MASK_PATTERNS</code>)</div>` : "";
+        ? `<div class="guardnote">🛡️ 답변 속 개인정보 ${r.masked}곳을 가렸습니다. (🛡️ 가드레일 탭에서 조절)</div>` : "";
       body.innerHTML = md(r.answer) + maskNote +
         `<details class="src"><summary>근거 청크 ${r.chunks.length}개 보기</summary>${chunksHtml}</details>`;
       chatHistory.push({ q, a: r.answer });
-      document.getElementById("threadHead").classList.remove("hidden");
+      document.getElementById("clearBtn").classList.remove("hidden");
     }
   } catch (e) {
     body.innerHTML = `<span style="color:#D14343;font-weight:600"></span>`;
     body.firstChild.textContent = "⚠️ " + e.message;
   }
-  body.scrollIntoView({ behavior: "smooth", block: "end" });
+  thread.scrollTop = thread.scrollHeight;
   document.getElementById("question").value = "";
   btn.disabled = false;
+}
+
+// ── 가드레일 탭: 금지어·마스킹 편집 ──
+let guard = null;
+
+function esc(s) { const d = document.createElement("span"); d.textContent = s; return d.innerHTML; }
+
+async function loadGuardTab() {
+  guard = await api("/api/guardrail");
+  renderGuard();
+}
+
+function renderGuard() {
+  document.getElementById("kwList").innerHTML = guard.blocked_keywords.map((w, i) =>
+    `<span class="chip">🚫 ${esc(w)}<b class="x" onclick="rmKeyword(${i})">×</b></span>`).join("")
+    || '<span class="guarddesc">금지어가 없습니다 — 모든 질문이 통과됩니다.</span>';
+  document.getElementById("patList").innerHTML = guard.mask_patterns.map((p, i) =>
+    `<div class="patrow"><code>${esc(p)}</code><b class="x" onclick="rmPattern(${i})">×</b></div>`).join("")
+    || '<span class="guarddesc">마스킹 패턴이 없습니다.</span>';
+  document.getElementById("blockMsgInput").value = guard.block_message;
+  document.getElementById("maskTextInput").value = guard.mask_text;
+}
+
+function addKeyword() {
+  const el = document.getElementById("kwInput");
+  const w = el.value.trim();
+  if (w && !guard.blocked_keywords.includes(w)) guard.blocked_keywords.push(w);
+  el.value = "";
+  renderGuard();
+}
+function rmKeyword(i) { guard.blocked_keywords.splice(i, 1); renderGuard(); }
+
+function addPreset(pattern) {
+  if (!guard.mask_patterns.includes(pattern)) guard.mask_patterns.push(pattern);
+  renderGuard();
+}
+function addPattern() {
+  const el = document.getElementById("patInput");
+  const p = el.value.trim();
+  if (p && !guard.mask_patterns.includes(p)) guard.mask_patterns.push(p);
+  el.value = "";
+  renderGuard();
+}
+function rmPattern(i) { guard.mask_patterns.splice(i, 1); renderGuard(); }
+
+async function saveGuard() {
+  guard.block_message = document.getElementById("blockMsgInput").value.trim();
+  guard.mask_text = document.getElementById("maskTextInput").value.trim();
+  try {
+    guard = await api("/api/guardrail", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(guard),
+    });
+    renderGuard();
+    show("guardMsg", "저장했습니다 — 💬 챗봇에 바로 적용돼요.", "ok");
+    refresh();
+  } catch (e) { show("guardMsg", e.message, "error"); }
+}
+
+async function resetGuard() {
+  guard = await api("/api/guardrail", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reset: true }),
+  });
+  renderGuard();
+  show("guardMsg", "config.py의 기본값으로 되돌렸습니다.", "ok");
+  refresh();
 }
 
 refresh();
