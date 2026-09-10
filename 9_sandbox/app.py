@@ -2,10 +2,14 @@
 
 브라우저(index.html)가 보내는 요청을 받아서:
   GET  /            → 화면(index.html)을 보여줌
+  GET  /guide       → 쉬운 설명서(guide.html)
   GET  /api/status  → 지금 상태(문서 개수, 청크 개수, 사용 중인 AI)
-  POST /api/ask     → 질문 → 벡터 검색 → AI 답변
+  GET  /api/chunks  → 벡터디비에 저장된 청크 목록 (어떻게 쪼개졌는지 구경)
+  GET  /api/file    → data 폴더 문서의 원문 (?name=파일명)
+  POST /api/ask     → 질문(+이전 대화) → 벡터 검색 → AI 답변
   POST /api/upload  → 문서 파일을 data 폴더에 저장
-  POST /api/rebuild → 벡터디비 새로 만들기
+  POST /api/sample  → 샘플 문서를 data 폴더로 복사
+  POST /api/rebuild → 벡터디비 새로 만들기 (청크 크기·겹침 조절 가능)
   POST /api/reset   → 벡터디비 초기화(삭제)
 
 실행: python app.py  →  브라우저에서 http://localhost:8501
@@ -14,6 +18,7 @@ import json
 import os
 import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import urlparse, parse_qs
 
 import config
 import llm
@@ -45,15 +50,24 @@ class Handler(BaseHTTPRequestHandler):
 
     # ── 화면과 상태 ──
     def do_GET(self):
-        if self.path == "/":
-            self._send(render_index(), ctype="text/html; charset=utf-8")
-        elif self.path == "/guide":
-            with open(os.path.join(BASE_DIR, "guide.html"), encoding="utf-8") as f:
-                self._send(f.read(), ctype="text/html; charset=utf-8")
-        elif self.path == "/api/status":
-            self._json(rag.db_info())
-        else:
-            self._json({"error": "없는 주소입니다"}, code=404)
+        url = urlparse(self.path)
+        try:
+            if url.path == "/":
+                self._send(render_index(), ctype="text/html; charset=utf-8")
+            elif url.path == "/guide":
+                with open(os.path.join(BASE_DIR, "guide.html"), encoding="utf-8") as f:
+                    self._send(f.read(), ctype="text/html; charset=utf-8")
+            elif url.path == "/api/status":
+                self._json(rag.db_info())
+            elif url.path == "/api/chunks":
+                self._json(rag.get_chunks())
+            elif url.path == "/api/file":
+                name = parse_qs(url.query).get("name", [""])[0]
+                self._json(rag.read_file(name))
+            else:
+                self._json({"error": "없는 주소입니다"}, code=404)
+        except Exception as e:
+            self._json({"error": str(e)}, code=400)
 
     # ── 동작(질문·업로드·DB 관리) ──
     def do_POST(self):
@@ -61,12 +75,20 @@ class Handler(BaseHTTPRequestHandler):
         body = self.rfile.read(length)
         try:
             if self.path == "/api/ask":
-                question = json.loads(body)["question"].strip()
+                data = json.loads(body)
+                question = data["question"].strip()
                 if not question:
                     raise RuntimeError("질문을 입력해 주세요.")
+                # 이전 대화(최근 4턴)를 프롬프트에 넣어 맥락을 기억하게 합니다
+                turns = [f"사용자: {t['q']}\nAI: {t['a'][:400]}"
+                         for t in (data.get("history") or [])[-4:]]
+                history = "\n\n".join(turns) if turns else "(없음)"
                 chunks = rag.search(question)                      # 1) 벡터 검색
                 context = "\n\n---\n\n".join(c["text"] for c in chunks)
-                prompt = config.PROMPT.format(context=context, question=question)
+                try:
+                    prompt = config.PROMPT.format(history=history, context=context, question=question)
+                except KeyError:  # 프롬프트에서 {history}를 지웠어도 동작하게
+                    prompt = config.PROMPT.format(context=context, question=question)
                 answer = llm.ask(prompt)                           # 2) AI 답변 생성
                 self._json({"answer": answer, "chunks": chunks})
             elif self.path == "/api/upload":
@@ -74,8 +96,9 @@ class Handler(BaseHTTPRequestHandler):
             elif self.path == "/api/sample":
                 self._json({"saved": rag.load_samples()})
             elif self.path == "/api/rebuild":
+                opts = json.loads(body) if body else {}
                 rag.reset_db()
-                self._json(rag.build_db())
+                self._json(rag.build_db(opts.get("chunk_size"), opts.get("chunk_overlap")))
             elif self.path == "/api/reset":
                 rag.reset_db()
                 self._json({"ok": True})

@@ -39,9 +39,10 @@ def load_samples():
     return names
 
 
-def split_text(text):
-    """문단을 우선 지키면서 CHUNK_SIZE 글자 안팎으로 쪼갭니다."""
-    size, overlap = config.CHUNK_SIZE, config.CHUNK_OVERLAP
+def split_text(text, size=None, overlap=None):
+    """문단을 우선 지키면서 size 글자 안팎으로 쪼갭니다. (기본값은 config)"""
+    size = size or config.CHUNK_SIZE
+    overlap = config.CHUNK_OVERLAP if overlap is None else overlap
     paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
     chunks, current = [], ""
     for para in paragraphs:
@@ -64,21 +65,44 @@ def cosine(a, b):
     return dot / norm if norm else 0.0
 
 
-def build_db():
+def build_db(chunk_size=None, chunk_overlap=None):
     """data 폴더의 문서 전부 → 청크 → 벡터 → vector_db.json 저장"""
     files = list_files()
     if not files:
         raise RuntimeError("data 폴더에 .md 또는 .txt 파일이 없습니다. 먼저 문서를 올려 주세요.")
+    size = chunk_size or config.CHUNK_SIZE
+    overlap = config.CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
     entries = []
     for name in files:
         with open(os.path.join(DATA_DIR, name), encoding="utf-8") as f:
             text = f.read()
-        for chunk in split_text(text):
+        for chunk in split_text(text, size, overlap):
             entries.append({"source": name, "text": chunk, "vector": llm.embed(chunk)})
-    db = {"backend": llm.BACKEND, "chunk_size": config.CHUNK_SIZE, "chunks": entries}
+    db = {"backend": llm.BACKEND, "chunk_size": size, "chunk_overlap": overlap, "chunks": entries}
     with open(DB_PATH, "w", encoding="utf-8") as f:
         json.dump(db, f, ensure_ascii=False)
     return {"files": len(files), "chunks": len(entries)}
+
+
+def get_chunks():
+    """벡터디비 속 청크를 (벡터는 빼고) 보여주기용으로 반환"""
+    if not os.path.exists(DB_PATH):
+        return {"exists": False, "chunks": []}
+    with open(DB_PATH, encoding="utf-8") as f:
+        db = json.load(f)
+    return {"exists": True, "chunk_size": db.get("chunk_size"),
+            "chunk_overlap": db.get("chunk_overlap"), "backend": db.get("backend"),
+            "chunks": [{"source": c["source"], "text": c["text"]} for c in db["chunks"]]}
+
+
+def read_file(name):
+    """data 폴더 문서의 원문 반환 (경로 탈출 방지를 위해 파일명만 허용)"""
+    name = os.path.basename(name)
+    path = os.path.join(DATA_DIR, name)
+    if not os.path.exists(path) or not name.endswith((".md", ".txt")):
+        raise RuntimeError(f"'{name}' 문서를 찾을 수 없습니다.")
+    with open(path, encoding="utf-8") as f:
+        return {"name": name, "text": f.read()}
 
 
 def reset_db():
@@ -90,12 +114,16 @@ def reset_db():
 def db_info():
     """화면 상단 상태 표시용 정보"""
     info = {"backend": llm.BACKEND, "ai_ready": llm.ready(), "files": list_files(),
-            "db_exists": os.path.exists(DB_PATH), "chunks": 0, "db_backend": None}
+            "db_exists": os.path.exists(DB_PATH), "chunks": 0, "db_backend": None,
+            "cfg_chunk_size": config.CHUNK_SIZE, "cfg_chunk_overlap": config.CHUNK_OVERLAP,
+            "db_chunk_size": None, "db_chunk_overlap": None}
     if info["db_exists"]:
         with open(DB_PATH, encoding="utf-8") as f:
             db = json.load(f)
         info["chunks"] = len(db["chunks"])
         info["db_backend"] = db.get("backend")
+        info["db_chunk_size"] = db.get("chunk_size")
+        info["db_chunk_overlap"] = db.get("chunk_overlap")
     return info
 
 

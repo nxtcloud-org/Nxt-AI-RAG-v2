@@ -37,21 +37,21 @@
     background: linear-gradient(120deg, var(--grad-a), var(--grad-b));
     color: #fff; padding: 44px 0 88px; position: relative; overflow: hidden;
   }
-  .hero::after {   /* 은은한 빛망울 */
+  .hero::after {
     content: ""; position: absolute; inset: 0;
     background: radial-gradient(500px 220px at 78% 20%, rgba(255,255,255,.18), transparent 60%);
   }
   .hero .wrap { position: relative; z-index: 1; }
   .hero-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.6px; }
-  .subtitle { margin-top: 8px; font-size: 15px; opacity: .85; font-weight: 400; }
+  .subtitle { margin-top: 8px; font-size: 15px; opacity: .85; }
   .badge {
     backdrop-filter: blur(6px); background: rgba(255,255,255,.16);
     border: 1px solid rgba(255,255,255,.35); color: #fff;
     border-radius: 999px; padding: 7px 16px; font-size: 13px; font-weight: 600; white-space: nowrap;
   }
 
-  /* ── RAG 파이프라인 (히어로에 걸쳐 뜨는 카드) ── */
+  /* ── RAG 파이프라인 ── */
   .pipeline {
     margin-top: -52px; position: relative; z-index: 2;
     background: rgba(255,255,255,.92); backdrop-filter: blur(10px);
@@ -60,7 +60,7 @@
     display: flex; align-items: stretch; padding: 18px 10px;
   }
   .node { flex: 1; text-align: center; position: relative; padding: 4px 6px; }
-  .node + .node::before {   /* 노드 사이 연결선 */
+  .node + .node::before {
     content: ""; position: absolute; left: calc(-50% + 26px); right: calc(50% + 26px);
     top: 26px; height: 2px; background: #DCE5EC; border-radius: 2px;
   }
@@ -79,6 +79,26 @@
   .node-val { font-size: 13px; font-weight: 800; color: var(--ink); margin-top: 1px; }
   .node.on .node-name { color: var(--accent); }
 
+  /* ── 탭 ── */
+  .tabs {
+    display: flex; gap: 6px; margin: 20px auto 0; justify-content: center;
+    background: rgba(255,255,255,.8); border: 1px solid rgba(16,31,46,.06);
+    border-radius: 999px; padding: 6px; width: fit-content;
+    box-shadow: 0 8px 24px -18px rgba(16,31,46,.3);
+  }
+  .tab {
+    border: 0; background: none; border-radius: 999px; padding: 9px 22px;
+    font-size: 14px; font-weight: 700; color: var(--muted); cursor: pointer; font-family: inherit;
+    transition: all .2s;
+  }
+  .tab.active {
+    background: linear-gradient(135deg, var(--grad-a), var(--grad-b)); color: #fff;
+    box-shadow: 0 6px 14px -6px rgba(79,70,229,.5);
+  }
+  .page { display: none; animation: fadein .25s ease; }
+  .page.active { display: block; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
   /* ── 카드 공통 ── */
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
   @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
@@ -93,8 +113,13 @@
   .stepnum {
     width: 22px; height: 22px; border-radius: 7px; font-size: 12px; color: #fff;
     background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
-    display: inline-flex; align-items: center; justify-content: center;
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
+  .hint {
+    margin-left: auto; background: #FFF4E0; color: #B7791F; border-radius: 999px;
+    padding: 4px 12px; font-size: 12px; font-weight: 800; animation: bob 1.2s ease infinite;
+  }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 
   /* ── 버튼 ── */
   button {
@@ -107,6 +132,29 @@
   button:hover { transform: translateY(-1px); box-shadow: 0 12px 20px -8px rgba(79,70,229,.55); }
   button.ghost { background: #EDF2F6; color: var(--ink); box-shadow: none; }
   button:disabled { opacity: .55; cursor: wait; transform: none; }
+  button.attention { animation: pulse 1.6s infinite; }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(79,70,229,.45); }
+    70% { box-shadow: 0 0 0 14px rgba(79,70,229,0); }
+    100% { box-shadow: 0 0 0 0 rgba(79,70,229,0); }
+  }
+
+  /* ── 홈 탭 ── */
+  .welcome { margin-top: 20px; font-size: 15.5px; line-height: 1.8; }
+  .welcome b { color: var(--accent); }
+  .story { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 16px; }
+  .story .card { text-align: center; padding: 18px 12px; margin: 0; }
+  .story .emoji { font-size: 30px; }
+  .story h3 { font-size: 14px; margin: 6px 0 3px; }
+  .story p { font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+  .story .as { font-size: 11.5px; font-weight: 700; color: var(--accent); margin-top: 6px; }
+  .howto { margin-top: 16px; }
+  .howto li { margin: 6px 0 6px 22px; font-size: 14.5px; }
+  .cta { display: flex; gap: 10px; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
+  a.linkbtn {
+    display: inline-block; text-decoration: none; border-radius: 10px; padding: 11px 18px;
+    font-size: 14px; font-weight: 700; background: #EDF2F6; color: var(--ink);
+  }
 
   /* ── 업로드 존 ── */
   .dropzone {
@@ -116,12 +164,19 @@
   }
   .dropzone:hover, .dropzone.over { border-color: var(--accent); background: #F0F9FA; color: var(--accent); }
   .dropzone b { display: block; font-size: 15px; color: var(--ink); margin-bottom: 3px; }
-  .dropzone.over b { color: var(--accent); }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
   .chip {
     background: #EDF2F6; border-radius: 999px; padding: 5px 12px;
     font-size: 12.5px; font-weight: 600; color: var(--muted);
   }
+  .chip.click { cursor: pointer; background: #fff; border: 1px solid #DCE5EC; }
+  .chip.click:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── 슬라이더 ── */
+  .slider-row { margin-top: 12px; }
+  .slider-row label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: var(--muted); }
+  .slider-row label b { color: var(--accent); font-size: 13.5px; }
+  input[type=range] { width: 100%; accent-color: var(--accent); margin-top: 6px; }
 
   /* ── 질문 영역 ── */
   .askcard { margin-top: 16px; }
@@ -141,8 +196,9 @@
   }
   .exq:hover { border-color: var(--accent); color: var(--accent); background: #F0F9FA; }
 
-  /* ── 대화(답변) ── */
-  .thread { margin-top: 20px; display: flex; flex-direction: column; gap: 14px; }
+  /* ── 대화 ── */
+  .thread-head { display: flex; justify-content: flex-end; margin-top: 16px; }
+  .thread { margin-top: 8px; display: flex; flex-direction: column; gap: 14px; }
   .bubble-q {
     align-self: flex-end; max-width: 80%;
     background: linear-gradient(135deg, var(--grad-a), var(--grad-b)); color: #fff;
@@ -150,10 +206,7 @@
     box-shadow: 0 8px 18px -10px rgba(79,70,229,.5);
     animation: rise .3s ease both;
   }
-  .bubble-a {
-    align-self: flex-start; max-width: 92%; display: flex; gap: 10px;
-    animation: rise .3s ease both;
-  }
+  .bubble-a { align-self: flex-start; max-width: 92%; display: flex; gap: 10px; animation: rise .3s ease both; }
   .avatar {
     width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0; font-size: 18px;
     background: #fff; border: 1px solid rgba(16,31,46,.07);
@@ -170,8 +223,6 @@
   .body ul { margin: 6px 0 6px 18px; }
   .body b { color: var(--accent); }
   @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-
-  /* 로딩 점 세 개 */
   .dots span {
     display: inline-block; width: 7px; height: 7px; border-radius: 50%;
     background: var(--muted); margin-right: 4px; animation: blink 1.2s infinite;
@@ -180,12 +231,9 @@
   .dots span:nth-child(3) { animation-delay: .4s; }
   @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
 
-  /* 근거 청크 */
+  /* 근거·청크 */
   details.src { margin-top: 10px; }
-  details.src summary {
-    cursor: pointer; font-size: 13px; font-weight: 700; color: var(--accent);
-    list-style: none; user-select: none;
-  }
+  details.src summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--accent); list-style: none; user-select: none; }
   details.src summary::before { content: "▸ "; }
   details.src[open] summary::before { content: "▾ "; }
   .chunk {
@@ -193,11 +241,23 @@
     border-radius: 0 10px 10px 0; padding: 10px 14px; margin-top: 8px;
     font-size: 12.5px; color: var(--muted); white-space: pre-wrap; line-height: 1.6;
   }
-  .chunk .meta { display: flex; align-items: center; gap: 8px; color: var(--ink); font-weight: 700; margin-bottom: 6px; }
+  .chunk .meta { display: flex; align-items: center; gap: 8px; color: var(--ink); font-weight: 700; margin-bottom: 6px; flex-wrap: wrap; }
   .bar { flex: 1; max-width: 120px; height: 5px; background: #E3EAEF; border-radius: 3px; overflow: hidden; }
   .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--grad-a), var(--grad-b)); }
 
+  /* ── 데이터 탭 ── */
+  .viewer {
+    background: #F7FAFC; border: 1px solid #E3EAEF; border-radius: 12px;
+    padding: 14px 16px; margin-top: 12px; max-height: 380px; overflow-y: auto;
+    font-size: 13px; line-height: 1.7; white-space: pre-wrap; color: var(--ink);
+  }
+  .empty { color: var(--muted); font-size: 13.5px; padding: 12px 0; }
+  .chunkmeta { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  .chunkmeta b { color: var(--accent); }
+  #chunkList { max-height: 520px; overflow-y: auto; margin-top: 8px; }
+
   .msg { font-size: 13.5px; margin-top: 10px; color: var(--muted); }
+  .msg.ok { color: var(--accent); font-weight: 700; }
   .msg.error { color: #D14343; font-weight: 600; }
   .hidden { display: none; }
   footer { text-align: center; margin-top: 40px; font-size: 12.5px; color: var(--muted); }
@@ -247,55 +307,122 @@
     </div>
   </div>
 
-  <div class="grid">
-    <!-- 1단계 -->
-    <div class="card">
-      <h2><span class="stepnum">1</span> 문서 넣기 <span style="color:var(--muted);font-weight:500;font-size:12.5px">→ data/</span></h2>
-      <div class="dropzone" id="dropzone">
-        <b>파일을 끌어다 놓으세요</b>
-        또는 클릭해서 선택 (.md / .txt)
-        <input type="file" id="fileInput" accept=".md,.txt" multiple class="hidden">
-      </div>
-      <button class="ghost" style="width:100%;margin-top:10px" onclick="loadSample()">
-        🧪 샘플 문서로 바로 해보기 (대학 행정 편람)
-      </button>
-      <div class="chips" id="fileList"></div>
-      <p class="msg" id="uploadMsg"></p>
-    </div>
+  <!-- 탭 -->
+  <div class="tabs">
+    <button class="tab active" data-page="home" onclick="switchTab(this)">🏠 홈</button>
+    <button class="tab" data-page="lab" onclick="switchTab(this)">⚡ 실습</button>
+    <button class="tab" data-page="data" onclick="switchTab(this)">🔍 데이터 보기</button>
+  </div>
 
-    <!-- 2단계 -->
-    <div class="card">
-      <h2><span class="stepnum">2</span> 벡터디비 만들기 <span style="color:var(--muted);font-weight:500;font-size:12.5px">→ vector_db.json</span></h2>
-      <p style="font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:14px">
-        문서를 청크로 쪼개고, 의미 좌표(벡터)로 바꿔 저장합니다.<br>
-        설정을 바꿨다면 다시 만들어야 반영됩니다.
-      </p>
-      <div style="display:flex;gap:8px">
-        <button id="buildBtn" onclick="rebuild()">⚡ DB 만들기</button>
-        <button class="ghost" onclick="resetDb()">초기화</button>
+  <!-- ═══════════ 홈 탭 ═══════════ -->
+  <div class="page active" id="page-home">
+    <div class="card welcome">
+      <b>내가 넣은 문서만 읽고 대답하는 나만의 AI 검색기</b>입니다.
+      그리고 <b>샌드박스(모래놀이터)</b>예요 — 제목·색·말투를 바꾸고, 내 문서를 넣고,
+      코드를 고장 내도 됩니다. 망가지면 다시 다운로드하면 그만이에요.
+    </div>
+    <div class="story">
+      <div class="card"><div class="emoji">📚</div><h3>책꽂이</h3>
+        <p>답의 재료가 될 문서를 꽂아두는 곳</p><div class="as">= data 폴더</div></div>
+      <div class="card"><div class="emoji">✂️</div><h3>쪽지 만들기</h3>
+        <p>책을 통째로 못 보니 작은 쪽지로 잘라요</p><div class="as">= 청크 분할</div></div>
+      <div class="card"><div class="emoji">🗄️</div><h3>정리 서랍</h3>
+        <p>쪽지를 의미별로 정리한 서랍</p><div class="as">= vector_db.json</div></div>
+      <div class="card"><div class="emoji">🤖</div><h3>답하는 조수</h3>
+        <p>질문과 비슷한 쪽지만 보고 답해요</p><div class="as">= AI</div></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>사용 순서는 세 번의 클릭</h2>
+      <ol class="howto">
+        <li><b>문서 넣기</b> — 파일을 끌어다 놓거나, 샘플 버튼 하나로 시작</li>
+        <li><b>DB 만들기</b> — 쪽지로 자르고 서랍에 정리 (크기를 슬라이더로 실험!)</li>
+        <li><b>질문하기</b> — AI가 근거 쪽지와 함께 답해요. 이어서 물어봐도 맥락을 기억합니다</li>
+      </ol>
+      <div class="cta">
+        <button onclick="goLab()">⚡ 실습 시작하기</button>
+        <a class="linkbtn" href="/guide">📖 더 자세한 설명서</a>
       </div>
-      <p class="msg" id="dbMsg"></p>
     </div>
   </div>
 
-  <!-- 3단계 -->
-  <div class="card askcard">
-    <h2><span class="stepnum">3</span> 질문하기</h2>
-    <div class="askrow">
-      <input type="text" id="question" placeholder="문서 내용에 대해 무엇이든 물어보세요"
-             onkeydown="if(event.key==='Enter')ask()">
-      <button id="askBtn" onclick="ask()">검색 + 답변</button>
+  <!-- ═══════════ 실습 탭 ═══════════ -->
+  <div class="page" id="page-lab">
+    <div class="grid">
+      <!-- 1단계 -->
+      <div class="card">
+        <h2><span class="stepnum">1</span> 문서 넣기 <span style="color:var(--muted);font-weight:500;font-size:12.5px">→ data/</span></h2>
+        <div class="dropzone" id="dropzone">
+          <b>파일을 끌어다 놓으세요</b>
+          또는 클릭해서 선택 (.md / .txt)
+          <input type="file" id="fileInput" accept=".md,.txt" multiple class="hidden">
+        </div>
+        <button class="ghost" style="width:100%;margin-top:10px" onclick="loadSample()">
+          🧪 샘플 문서로 바로 해보기 (대학 행정 편람)
+        </button>
+        <div class="chips" id="fileList"></div>
+        <p class="msg" id="uploadMsg"></p>
+      </div>
+
+      <!-- 2단계 -->
+      <div class="card">
+        <h2><span class="stepnum">2</span> 벡터디비 만들기
+          <span class="hint hidden" id="nextHint">👉 다음 단계!</span></h2>
+        <div class="slider-row">
+          <label>✂️ 청크 크기 (쪽지 한 장의 글자 수) <b><span id="chunkVal">300</span>자</b></label>
+          <input type="range" id="chunkSlider" min="100" max="1000" step="50" value="300"
+                 oninput="document.getElementById('chunkVal').textContent=this.value">
+        </div>
+        <div class="slider-row">
+          <label>겹침 (쪽지끼리 이어지는 글자 수) <b><span id="overlapVal">50</span>자</b></label>
+          <input type="range" id="overlapSlider" min="0" max="200" step="10" value="50"
+                 oninput="document.getElementById('overlapVal').textContent=this.value">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <button id="buildBtn" onclick="rebuild()">⚡ DB 만들기</button>
+          <button class="ghost" onclick="resetDb()">초기화</button>
+        </div>
+        <p class="msg" id="dbMsg"></p>
+      </div>
     </div>
-    <div class="examples" id="examples">
-      <span class="exq" onclick="fillAsk(this)">경조사 휴가는 며칠인가요?</span>
-      <span class="exq" onclick="fillAsk(this)">재직 3년이면 연가가 며칠인가요?</span>
-      <span class="exq" onclick="fillAsk(this)">출퇴근 기록 소급 등록은 언제까지 가능한가요?</span>
+
+    <!-- 3단계 -->
+    <div class="card askcard">
+      <h2><span class="stepnum">3</span> 질문하기
+        <span style="color:var(--muted);font-weight:500;font-size:12.5px">이어서 질문하면 맥락을 기억해요</span></h2>
+      <div class="askrow">
+        <input type="text" id="question" placeholder="문서 내용에 대해 무엇이든 물어보세요"
+               onkeydown="if(event.key==='Enter')ask()">
+        <button id="askBtn" onclick="ask()">검색 + 답변</button>
+      </div>
+      <div class="examples">
+        <span class="exq" onclick="fillAsk(this)">경조사 휴가는 며칠인가요?</span>
+        <span class="exq" onclick="fillAsk(this)">재직 3년이면 연가가 며칠인가요?</span>
+        <span class="exq" onclick="fillAsk(this)">출퇴근 기록 소급 등록은 언제까지 가능한가요?</span>
+      </div>
+      <p class="msg" id="askMsg"></p>
     </div>
-    <p class="msg" id="askMsg"></p>
+
+    <div class="thread-head hidden" id="threadHead">
+      <button class="ghost" style="padding:7px 14px;font-size:12.5px" onclick="clearChat()">🧹 대화 지우기 (맥락 초기화)</button>
+    </div>
+    <div class="thread" id="thread"></div>
   </div>
 
-  <!-- 대화 -->
-  <div class="thread" id="thread"></div>
+  <!-- ═══════════ 데이터 탭 ═══════════ -->
+  <div class="page" id="page-data">
+    <div class="card" style="margin-top:20px">
+      <h2>📁 원본 문서 <span style="color:var(--muted);font-weight:500;font-size:12.5px">칩을 누르면 내용이 열립니다</span></h2>
+      <div class="chips" id="dataFiles"></div>
+      <div class="viewer hidden" id="fileViewer"></div>
+      <p class="empty hidden" id="noFiles">아직 문서가 없습니다. 실습 탭에서 문서를 넣어 주세요.</p>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>✂️ 청크 분할 결과 <span style="color:var(--muted);font-weight:500;font-size:12.5px">문서가 실제로 어떻게 쪼개져 저장됐는지</span></h2>
+      <p class="chunkmeta hidden" id="chunkMeta"></p>
+      <div id="chunkList"></div>
+      <p class="empty hidden" id="noChunks">아직 벡터디비가 없습니다. 실습 탭에서 [DB 만들기]를 눌러 주세요.</p>
+    </div>
+  </div>
 
   <footer>
     RAG 샌드박스 · <code>data/</code> → <code>vector_db.json</code> → AI ·
@@ -314,6 +441,8 @@ async function api(path, options) {
   return data;
 }
 
+let sliderInit = false;
+
 async function refresh() {
   const s = await api("/api/status");
   document.getElementById("fileCount").textContent = s.files.length;
@@ -330,19 +459,43 @@ async function refresh() {
   }
   document.getElementById("fileList").innerHTML =
     s.files.map(f => `<span class="chip">📄 ${f}</span>`).join("");
-  // 파이프라인 노드 불 켜기
   toggle("nFiles", s.files.length > 0);
   toggle("nChunks", s.chunks > 0);
   toggle("nDb", s.db_exists);
   toggle("nAi", s.db_exists);
+  // 슬라이더 초기값: DB가 있으면 그때 쓴 값, 없으면 config 기본값
+  if (!sliderInit) {
+    setSlider("chunkSlider", "chunkVal", s.db_chunk_size || s.cfg_chunk_size);
+    setSlider("overlapSlider", "overlapVal", s.db_chunk_overlap ?? s.cfg_chunk_overlap);
+    sliderInit = true;
+  }
+  // 문서는 있는데 DB가 없으면 → [DB 만들기]로 시선 끌기
+  setAttention(s.files.length > 0 && !s.db_exists);
+  return s;
 }
 function toggle(id, on) { document.getElementById(id).classList.toggle("on", on); }
-
-function show(id, text, isError) {
+function setSlider(sid, vid, val) {
+  document.getElementById(sid).value = val;
+  document.getElementById(vid).textContent = val;
+}
+function setAttention(on) {
+  document.getElementById("buildBtn").classList.toggle("attention", on);
+  document.getElementById("nextHint").classList.toggle("hidden", !on);
+}
+function show(id, text, cls) {
   const el = document.getElementById(id);
   el.textContent = text;
-  el.className = "msg" + (isError ? " error" : "");
+  el.className = "msg" + (cls ? " " + cls : "");
 }
+
+// ── 탭 전환 ──
+function switchTab(btn) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t === btn));
+  document.querySelectorAll(".page").forEach(p =>
+    p.classList.toggle("active", p.id === "page-" + btn.dataset.page));
+  if (btn.dataset.page === "data") loadDataTab();
+}
+function goLab() { switchTab(document.querySelector('[data-page="lab"]')); }
 
 // ── 업로드 (클릭 + 드래그&드롭) ──
 const dz = document.getElementById("dropzone");
@@ -359,17 +512,17 @@ async function upload(files) {
   for (const f of files) form.append("files", f);
   try {
     const r = await api("/api/upload", { method: "POST", body: form });
-    show("uploadMsg", `저장 완료: ${r.saved.join(", ")} — 이제 [DB 만들기]를 눌러 주세요.`);
+    show("uploadMsg", `저장 완료: ${r.saved.join(", ")} — 👉 이제 [⚡ DB 만들기]를 눌러 주세요!`, "ok");
     refresh();
-  } catch (e) { show("uploadMsg", e.message, true); }
+  } catch (e) { show("uploadMsg", e.message, "error"); }
 }
 
 async function loadSample() {
   try {
     const r = await api("/api/sample", { method: "POST" });
-    show("uploadMsg", `샘플 문서를 넣었어요: ${r.saved.join(", ")} — 이제 [DB 만들기]를 눌러 보세요.`);
+    show("uploadMsg", `샘플 문서를 넣었어요: ${r.saved.join(", ")} — 👉 이제 [⚡ DB 만들기]를 눌러 주세요!`, "ok");
     refresh();
-  } catch (e) { show("uploadMsg", e.message, true); }
+  } catch (e) { show("uploadMsg", e.message, "error"); }
 }
 
 // ── 벡터디비 ──
@@ -378,10 +531,17 @@ async function rebuild() {
   btn.disabled = true;
   show("dbMsg", "문서를 쪼개고 벡터로 바꾸는 중… (문서가 많으면 시간이 걸립니다)");
   try {
-    const r = await api("/api/rebuild", { method: "POST" });
-    show("dbMsg", `완료! 문서 ${r.files}개 → 청크 ${r.chunks}개를 벡터디비에 저장했습니다.`);
+    const r = await api("/api/rebuild", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chunk_size: Number(document.getElementById("chunkSlider").value),
+        chunk_overlap: Number(document.getElementById("overlapSlider").value),
+      }),
+    });
+    show("dbMsg", `완료! 문서 ${r.files}개 → 청크 ${r.chunks}개를 저장했습니다. 🔍 데이터 탭에서 쪼개진 모습을 구경해 보세요.`, "ok");
     refresh();
-  } catch (e) { show("dbMsg", e.message, true); }
+  } catch (e) { show("dbMsg", e.message, "error"); }
   btn.disabled = false;
 }
 async function resetDb() {
@@ -390,10 +550,51 @@ async function resetDb() {
   refresh();
 }
 
-// ── 질문 → 채팅형 답변 ──
+// ── 데이터 탭: 원본 문서 + 청크 구경 ──
+async function loadDataTab() {
+  const s = await refresh();
+  const filesBox = document.getElementById("dataFiles");
+  filesBox.innerHTML = s.files.map(f =>
+    `<span class="chip click" onclick="viewFile('${f}')">📄 ${f}</span>`).join("");
+  document.getElementById("noFiles").classList.toggle("hidden", s.files.length > 0);
+  if (!s.files.length) document.getElementById("fileViewer").classList.add("hidden");
+
+  const c = await api("/api/chunks");
+  const meta = document.getElementById("chunkMeta");
+  const list = document.getElementById("chunkList");
+  document.getElementById("noChunks").classList.toggle("hidden", c.exists);
+  meta.classList.toggle("hidden", !c.exists);
+  if (c.exists) {
+    meta.innerHTML = `청크 크기 <b>${c.chunk_size}자</b> · 겹침 <b>${c.chunk_overlap}자</b> · 총 <b>${c.chunks.length}개</b> (${c.backend} 임베딩) — 한 상자가 검색의 최소 단위입니다`;
+    list.innerHTML = c.chunks.map((ch, i) => {
+      const d = document.createElement("div");
+      d.textContent = ch.text;
+      return `<div class="chunk"><div class="meta">청크 #${i + 1} · ${ch.source} · ${ch.text.length}자</div>${d.innerHTML}</div>`;
+    }).join("");
+  } else {
+    list.innerHTML = "";
+  }
+}
+async function viewFile(name) {
+  try {
+    const r = await api("/api/file?name=" + encodeURIComponent(name));
+    const v = document.getElementById("fileViewer");
+    v.textContent = r.text;
+    v.classList.remove("hidden");
+  } catch (e) { alert(e.message); }
+}
+
+// ── 질문 → 채팅형 답변 (맥락 기억) ──
+let chatHistory = [];   // [{q, a}] — 최근 대화를 함께 보내 맥락을 잇습니다
+
 function fillAsk(el) {
   document.getElementById("question").value = el.textContent;
   ask();
+}
+function clearChat() {
+  chatHistory = [];
+  document.getElementById("thread").innerHTML = "";
+  document.getElementById("threadHead").classList.add("hidden");
 }
 
 // 아주 작은 마크다운 표시기 (굵게·제목·목록만)
@@ -409,7 +610,7 @@ function md(text) {
 
 async function ask() {
   const q = document.getElementById("question").value.trim();
-  if (!q) return show("askMsg", "질문을 입력해 주세요.", true);
+  if (!q) return show("askMsg", "질문을 입력해 주세요.", "error");
   show("askMsg", "");
   const btn = document.getElementById("askBtn");
   btn.disabled = true;
@@ -427,11 +628,11 @@ async function ask() {
     const r = await api("/api/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: q }),
+      body: JSON.stringify({ question: q, history: chatHistory.slice(-4) }),
     });
     const chunksHtml = r.chunks.map((c, i) => {
       const d = document.createElement("div");
-      d.textContent = c.text;   // 문서 내용은 안전하게 텍스트로
+      d.textContent = c.text;
       return `<div class="chunk">
         <div class="meta">근거 #${i + 1} · ${c.source}
           <span class="bar"><i style="width:${Math.round(c.score * 100)}%"></i></span>
@@ -439,6 +640,8 @@ async function ask() {
     }).join("");
     body.innerHTML = md(r.answer) +
       `<details class="src"><summary>근거 청크 ${r.chunks.length}개 보기</summary>${chunksHtml}</details>`;
+    chatHistory.push({ q, a: r.answer });
+    document.getElementById("threadHead").classList.remove("hidden");
   } catch (e) {
     body.innerHTML = `<span style="color:#D14343;font-weight:600"></span>`;
     body.firstChild.textContent = "⚠️ " + e.message;
