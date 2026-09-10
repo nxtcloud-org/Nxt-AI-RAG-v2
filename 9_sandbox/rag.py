@@ -17,12 +17,26 @@ import llm
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")        # 📁 파일 저장폴더
 DB_PATH = os.path.join(BASE_DIR, "vector_db.json")  # 🗄️ 벡터디비
+SAMPLE_DIR = os.path.join(BASE_DIR, "samples")   # 🧪 예시 문서 보관함
 
 
 def list_files():
     """data 폴더의 문서 목록"""
     os.makedirs(DATA_DIR, exist_ok=True)
     return sorted(f for f in os.listdir(DATA_DIR) if f.endswith((".md", ".txt")))
+
+
+def load_samples():
+    """samples 폴더의 예시 문서를 data 폴더로 복사 — 바로 테스트해볼 수 있게"""
+    names = sorted(f for f in os.listdir(SAMPLE_DIR) if f.endswith((".md", ".txt")))
+    if not names:
+        raise RuntimeError("samples 폴더에 예시 문서가 없습니다.")
+    os.makedirs(DATA_DIR, exist_ok=True)
+    for name in names:
+        with open(os.path.join(SAMPLE_DIR, name), "rb") as src:
+            with open(os.path.join(DATA_DIR, name), "wb") as dst:
+                dst.write(src.read())
+    return names
 
 
 def split_text(text):

@@ -1,3 +1,5 @@
 .env
 vector_db.json
 __pycache__/
+data/*
+!data/.gitkeep

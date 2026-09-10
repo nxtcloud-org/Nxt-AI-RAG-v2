@@ -71,6 +71,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._json({"answer": answer, "chunks": chunks})
             elif self.path == "/api/upload":
                 self._json({"saved": self._save_upload(body)})
+            elif self.path == "/api/sample":
+                self._json({"saved": rag.load_samples()})
             elif self.path == "/api/rebuild":
                 rag.reset_db()
                 self._json(rag.build_db())

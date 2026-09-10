@@ -256,6 +256,9 @@
         또는 클릭해서 선택 (.md / .txt)
         <input type="file" id="fileInput" accept=".md,.txt" multiple class="hidden">
       </div>
+      <button class="ghost" style="width:100%;margin-top:10px" onclick="loadSample()">
+        🧪 샘플 문서로 바로 해보기 (대학 행정 편람)
+      </button>
       <div class="chips" id="fileList"></div>
       <p class="msg" id="uploadMsg"></p>
     </div>
@@ -357,6 +360,14 @@ async function upload(files) {
   try {
     const r = await api("/api/upload", { method: "POST", body: form });
     show("uploadMsg", `저장 완료: ${r.saved.join(", ")} — 이제 [DB 만들기]를 눌러 주세요.`);
+    refresh();
+  } catch (e) { show("uploadMsg", e.message, true); }
+}
+
+async function loadSample() {
+  try {
+    const r = await api("/api/sample", { method: "POST" });
+    show("uploadMsg", `샘플 문서를 넣었어요: ${r.saved.join(", ")} — 이제 [DB 만들기]를 눌러 보세요.`);
     refresh();
   } catch (e) { show("uploadMsg", e.message, true); }
 }
