@@ -199,6 +199,7 @@
   }
   .chip.click { cursor: pointer; background: #fff; border: 1px solid #DCE5EC; }
   .chip.click:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.click.on { border-color: var(--accent); color: var(--accent); background: #F0F9FA; font-weight: 700; }
 
   /* ── 슬라이더 ── */
   .slider-row { margin-top: 12px; }
@@ -312,6 +313,7 @@
   .empty { color: var(--muted); font-size: 13.5px; padding: 12px 0; }
   .chunkmeta { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
   .chunkmeta b { color: var(--accent); }
+  mark.ov { background: rgba(79,70,229,.18); color: inherit; border-radius: 3px; padding: 0 1px; }
   #chunkList { max-height: 520px; overflow-y: auto; margin-top: 8px; }
 
   /* ── 페이지네이션 ── */
@@ -385,8 +387,8 @@
   <div class="tabs">
     <button class="tab active" data-page="home" onclick="switchTab(this)">🏠 홈</button>
     <button class="tab" data-page="lab" onclick="switchTab(this)">⚡ 실습</button>
-    <button class="tab" data-page="chat" onclick="switchTab(this)">💬 챗봇</button>
     <button class="tab" data-page="data" onclick="switchTab(this)">🔍 데이터</button>
+    <button class="tab" data-page="chat" onclick="switchTab(this)">💬 챗봇</button>
     <button class="tab" data-page="guard" onclick="switchTab(this)">🛡️ 가드레일</button>
   </div>
 
@@ -751,7 +753,7 @@ async function loadDataTab() {
   const s = await refresh();
   const filesBox = document.getElementById("dataFiles");
   filesBox.innerHTML = s.files.map(f =>
-    `<span class="chip click" onclick="viewFile('${f}')">📄 ${f}</span>`).join("");
+    `<span class="chip click${f === viewerFile ? " on" : ""}" data-name="${f}" onclick="viewFile('${f}')">📄 ${f}</span>`).join("");
   document.getElementById("noFiles").classList.toggle("hidden", s.files.length > 0);
   if (!s.files.length) document.getElementById("fileViewer").classList.add("hidden");
 
@@ -760,16 +762,41 @@ async function loadDataTab() {
   document.getElementById("noChunks").classList.toggle("hidden", c.exists);
   meta.classList.toggle("hidden", !c.exists);
   chunkItems = c.exists ? c.chunks : [];
+  chunkOverlap = c.exists ? (c.chunk_overlap || 0) : 0;
   chunkPage = 0;
   if (c.exists) {
-    meta.innerHTML = `청크 크기 <b>${c.chunk_size}자</b> · 겹침 <b>${c.chunk_overlap}자</b> · 총 <b>${c.chunks.length}개</b> (${c.backend} 임베딩) — 한 상자가 검색의 최소 단위입니다`;
+    const legend = chunkOverlap > 0 ? ` · <mark class="ov">이 색</mark> = 앞 청크와 겹치는 부분` : "";
+    meta.innerHTML = `청크 크기 <b>${c.chunk_size}자</b> · 겹침 <b>${c.chunk_overlap}자</b> · 총 <b>${c.chunks.length}개</b> (${c.backend} 임베딩) — 한 상자가 검색의 최소 단위입니다${legend}`;
   }
   renderChunkPage();
 }
 
-// 청크 목록 10개씩 페이지네이션
-let chunkItems = [], chunkPage = 0;
+// 청크 목록 10개씩 페이지네이션 (+ 오버랩 구간 색 표시)
+let chunkItems = [], chunkPage = 0, chunkOverlap = 0;
 const CHUNKS_PER_PAGE = 10;
+
+function escHtml(t) { const d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
+
+// 앞 청크의 끝과 이 청크의 시작이 몇 글자나 겹치는지 (겹침이 문맥을 잇는 모습을 보여주기 위해)
+function overlapLen(prev, curr, maxLen) {
+  const cap = Math.min(maxLen, prev.length, curr.length);
+  for (let k = cap; k >= 8; k--) {
+    if (prev.endsWith(curr.slice(0, k))) return k;
+  }
+  return 0;
+}
+
+function chunkHtml(ch, idx) {
+  const prev = idx > 0 ? chunkItems[idx - 1] : null;
+  let k = 0;
+  if (prev && prev.source === ch.source && chunkOverlap > 0) {
+    k = overlapLen(prev.text, ch.text, chunkOverlap + 20);
+  }
+  const innerHtml = k > 0
+    ? `<mark class="ov">${escHtml(ch.text.slice(0, k))}</mark>${escHtml(ch.text.slice(k))}`
+    : escHtml(ch.text);
+  return `<div class="chunk"><div class="meta">청크 #${idx + 1} · ${ch.source} · ${ch.text.length}자</div>${innerHtml}</div>`;
+}
 
 function renderChunkPage() {
   const list = document.getElementById("chunkList");
@@ -777,11 +804,8 @@ function renderChunkPage() {
   const pages = Math.max(1, Math.ceil(total / CHUNKS_PER_PAGE));
   chunkPage = Math.min(Math.max(0, chunkPage), pages - 1);
   const start = chunkPage * CHUNKS_PER_PAGE;
-  list.innerHTML = chunkItems.slice(start, start + CHUNKS_PER_PAGE).map((ch, i) => {
-    const d = document.createElement("div");
-    d.textContent = ch.text;
-    return `<div class="chunk"><div class="meta">청크 #${start + i + 1} · ${ch.source} · ${ch.text.length}자</div>${d.innerHTML}</div>`;
-  }).join("");
+  list.innerHTML = chunkItems.slice(start, start + CHUNKS_PER_PAGE)
+    .map((ch, i) => chunkHtml(ch, start + i)).join("");
   document.getElementById("chunkPager").classList.toggle("hidden", total === 0);
   document.getElementById("pgInfo").textContent = `${chunkPage + 1} / ${pages} 페이지 · 총 ${total}개`;
   document.getElementById("pgPrev").disabled = chunkPage === 0;
@@ -789,17 +813,35 @@ function renderChunkPage() {
   list.scrollTop = 0;
 }
 function chunkPageMove(delta) { chunkPage += delta; renderChunkPage(); }
-let viewerRaw = "", viewerShowRaw = false;
+let viewerRaw = "", viewerShowRaw = false, viewerFile = null;
 
 async function viewFile(name) {
+  if (viewerFile === name) {   // 열려 있는 문서를 다시 누르면 접기
+    closeViewer();
+    return;
+  }
   try {
     const r = await api("/api/file?name=" + encodeURIComponent(name));
     viewerRaw = r.text;
     viewerShowRaw = false;
+    viewerFile = name;
     document.getElementById("viewerName").textContent = "📄 " + name;
     document.getElementById("viewerBar").classList.remove("hidden");
     renderViewer();
+    markActiveChip();
   } catch (e) { alert(e.message); }
+}
+
+function closeViewer() {
+  viewerFile = null;
+  document.getElementById("viewerBar").classList.add("hidden");
+  document.getElementById("fileViewer").classList.add("hidden");
+  markActiveChip();
+}
+
+function markActiveChip() {
+  document.querySelectorAll("#dataFiles .chip").forEach(c =>
+    c.classList.toggle("on", c.dataset.name === viewerFile));
 }
 
 function renderViewer() {
